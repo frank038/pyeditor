@@ -2,5 +2,11 @@
 
 thisdir=$(dirname "$0")
 cd $thisdir
-./pyeditor.py &
+
+if [[ $# -eq 0 ]]; then
+    ./pyeditor.py
+else
+    ./pyeditor.py $1
+fi
+
 cd $HOME
