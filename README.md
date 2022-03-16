@@ -17,5 +17,6 @@ Features:
 - saves its window size
 - file name and path in its titlebar
 - load a file if it is passed as argument
+- dialogs for loading files or saving the document
 - configurable with its config file.
 
