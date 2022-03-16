@@ -15,5 +15,6 @@ Features:
 - comment/uncomment, also a group of code lines
 - read only mode
 - saves its window size
+- file name and path in its titlebar
 - configurable with its config file.
 
