@@ -16,5 +16,6 @@ Features:
 - read only mode
 - saves its window size
 - file name and path in its titlebar
+- load a file if it is passed as argument
 - configurable with its config file.
 
