@@ -20,3 +20,4 @@ Features:
 - dialogs for loading files or saving the document
 - configurable with its config file.
 
+![My image](https://github.com/frank038/pyeditor/blob/main/image1.png)
