@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.1 - Testing
+V. 0.2 - Testing
 
 Requires:
 - python3
@@ -20,6 +20,7 @@ Features:
 - dialogs for loading files or saving the document
 - line numbers
 - read only or modified tag in the titlebar
+- bash script support (switching in the gui)
 - configurable with its config file.
 
 ![My image](https://github.com/frank038/pyeditor/blob/main/image1.png)
