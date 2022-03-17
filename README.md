@@ -11,7 +11,7 @@ Requires:
 Features:
 - word autocompletition
 - braces autocompletition
-- word searching
+- string searching
 - comment/uncomment, also a group of code lines
 - read only mode
 - saves its window size
