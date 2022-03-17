@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.1
+# V 0.2
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -75,7 +75,6 @@ class CustomMainWindow(QMainWindow):
         self.setWindowIcon(QIcon("icons/progam.png"))
         self.resize(int(WINW), int(WINH))
         #
-        # self.setWindowTitle("Python editor - {}".format("unknown"))
         # has been modified
         self.isModified = False
         # Create frame and layout
@@ -101,10 +100,13 @@ class CustomMainWindow(QMainWindow):
         self.btn_open.clicked.connect(self.on_open)
         self.btn_box0.addWidget(self.btn_open)
         #
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItems(["python", "bash"])
+        self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
+        self.btn_box0.addWidget(self.lang_combo)
+        #
         self.__btn = QPushButton("Exit")
         self.__btn.clicked.connect(self.__btn_action)
-        # self.__btn.setFont(self.__myFont)
-        # self.__lyt.addWidget(self.__btn)
         self.btn_box0.addWidget(self.__btn)
         #
         self.pageName = ""
@@ -168,11 +170,6 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setAutoCompletionUseSingle(QsciScintilla.AcusNever)
         self.__editor.autoCompleteFromDocument()
         self.__editor.setAutoCompletionSource(QsciScintilla.AcsDocument)
-        # # Text wrapping
-        # # -----------------
-        # self.__editor.setWrapMode(QsciScintilla.WrapWord)
-        # self.__editor.setWrapVisualFlags(QsciScintilla.WrapFlagByText)
-        # self.__editor.setWrapIndentMode(QsciScintilla.WrapIndentIndented)
         # End-of-line mode
         # --------------------
         if ENDOFLINE == "unix":
@@ -181,6 +178,8 @@ class CustomMainWindow(QMainWindow):
             self.__editor.setEolMode(QsciScintilla.EolWindows)
         #
         self.__editor.setEolVisibility(False)
+        # comment string
+        self.STRCOMM = "# "
         # Indentation
         # ---------------
         self.__editor.setIndentationsUseTabs(USETAB)
@@ -203,6 +202,7 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setMarginType(0, QsciScintilla.NumberMargin)
         self.__editor.setMarginWidth(0, "00000")
         self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
+        self.__editor.setMarginsFont(self.__myFont)
         #
         self.__lexer = QsciLexerPython(self.__editor)
         self.__lexer.setDefaultFont(self.__myFont)
@@ -214,7 +214,7 @@ class CustomMainWindow(QMainWindow):
         self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerPython.Comment)
         # font
         self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
-        # Add editor to layout !
+        # Add editor to layout
         # -------------------------
         self.__lyt.addWidget(self.__editor)
         # 
@@ -223,15 +223,23 @@ class CustomMainWindow(QMainWindow):
     #
     def on_new(self):
         if self.isModified:
-            MyDialog("Info", "Save this document first.", self)
-            return
+            # MyDialog("Info", "Save this document first.", self)
+            # return
+            ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
+            if ret.getValue() == 0:
+                return
         self.__editor.setText("")
+        self.setWindowTitle("")
+        self.isModified = False
         
     #
     def on_open(self):
         if self.isModified:
-            MyDialog("Info", "Save this document first.", self)
-            return
+            # MyDialog("Info", "Save this document first.", self)
+            # return
+            ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
+            if ret.getValue() == 0:
+                return
         #
         fileName, _ = QFileDialog.getOpenFileName(self, "Select the file", os.path.expanduser('~'), "Python (*.py);;All Files (*)")
         # new_tab_to_open = False
@@ -242,9 +250,42 @@ class CustomMainWindow(QMainWindow):
                 self.__editor.setText("")
                 self.__editor.read(fd)
                 fd.close()
+                self.setWindowTitle(fileName)
+                self.pageName = fileName
             except Exception as E:
                 MyDialog("Error", str(E), self)
+        #
+        self.isModified = False
     
+    #
+    def on_lang_combo(self, idx):
+        if idx == 0:
+            self.__lexer = QsciLexerPython(self.__editor)
+            self.__lexer.setDefaultFont(self.__myFont)
+            self.__editor.setLexer(self.__lexer)
+            # editor background color
+            self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
+            # comment color
+            self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerPython.Comment)
+            # font
+            self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
+            # Margin
+            self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
+            self.__editor.setMarginsFont(self.__myFont)
+        elif idx == 1:
+            self.__lexer = QsciLexerBash(self.__editor)
+            self.__lexer.setDefaultFont(self.__myFont)
+            self.__editor.setLexer(self.__lexer)
+            # editor background color
+            self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
+            # comment color
+            self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerBash.Comment)
+            # font
+            self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
+            # Margin
+            self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
+            self.__editor.setMarginsFont(self.__myFont)
+        
     #
     def on_read_only(self, btn):
         if self.isModified:
@@ -302,13 +343,14 @@ class CustomMainWindow(QMainWindow):
             for line in range(line_from, line_to + 1):
                 if self.__editor.text(line) == "":
                     continue
-                self.__editor.insertAt("# ", line, 0)
+                #
+                self.__editor.insertAt(self.STRCOMM, line, 0)
         # no selection
         else:
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
-            self.__editor.insertAt("# ", line, 0)
+            self.__editor.insertAt(self.STRCOMM, line, 0)
     
     #
     def on_btn_uncomment(self):
@@ -384,6 +426,7 @@ class CustomMainWindow(QMainWindow):
             except Exception as E:
                 MyDialog("Error", str(E), self)
         qApp.quit()
+
 
 # simple dialog message
 # type - message - parent
@@ -473,7 +516,7 @@ class searchDialog(QDialog):
                 self.first_found = ret
             else:
                 self.editor.findNext()
-    
+        
     def getValue(self):
         return self.Value
 
