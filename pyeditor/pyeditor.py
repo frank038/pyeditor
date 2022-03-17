@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.2
+# V 0.3
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -92,6 +92,13 @@ class CustomMainWindow(QMainWindow):
         self.btn_box0 = QHBoxLayout()
         self.__lyt.addLayout(self.btn_box0)
         #
+        self.btn_h = QPushButton("H")
+        self.btn_h.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
+        self.btn_box0.addWidget(self.btn_h)
+        self.btn_h_menu = QMenu()
+        self.btn_h.setMenu(self.btn_h_menu)
+        self.btn_h_menu.triggered.connect(self.on_h_menu)
+        #
         self.btn_new = QPushButton("New")
         self.btn_new.clicked.connect(self.on_new)
         self.btn_box0.addWidget(self.btn_new)
@@ -108,6 +115,19 @@ class CustomMainWindow(QMainWindow):
         self.__btn = QPushButton("Exit")
         self.__btn.clicked.connect(self.__btn_action)
         self.btn_box0.addWidget(self.__btn)
+        # the history of opened files
+        self.pageNameHistory = []
+        try:
+            if not os.path.exists("pyeditorh.txt"):
+                ff = open("pyeditorh.txt", "w")
+                ff.close()
+            #
+            with open("pyeditorh.txt", "r") as ff:
+                self.pageNameHistory = ff.readlines()
+        except Exception as E:
+            MyDialog("Error", str(E)+"\nExiting...", self)
+            self.close()
+            sys.exit()
         #
         self.pageName = ""
         if len(sys.argv) > 1:
@@ -115,6 +135,17 @@ class CustomMainWindow(QMainWindow):
             if os.path.exists(filePath):
                 self.pageName = filePath
                 self.setWindowTitle("{}".format(self.pageName))
+                #
+                for el in self.pageNameHistory[::-1]:
+                    if el.rstrip("\n") == self.pageName:
+                        continue
+                    self.btn_h_menu.addAction(el.rstrip("\n"))
+                # populate the menu - opened doc at last position
+                self.btn_h_menu.addAction(self.pageName)
+                # save into the list once
+                if self.pageName+"\n" in self.pageNameHistory:
+                    self.pageNameHistory.remove(self.pageName+"\n")
+                self.pageNameHistory.append(self.pageName+"\n")
         # buttons
         self.btn_box = QHBoxLayout()
         self.__lyt.addLayout(self.btn_box)
@@ -217,9 +248,14 @@ class CustomMainWindow(QMainWindow):
         # Add editor to layout
         # -------------------------
         self.__lyt.addWidget(self.__editor)
-        # 
+        #
         self.show()
-        
+    
+    # open a file from the history
+    def on_h_menu(self, action):
+        fileName = action.text()
+        self.on_open_f(fileName)
+    
     #
     def on_new(self):
         if self.isModified:
@@ -242,6 +278,13 @@ class CustomMainWindow(QMainWindow):
                 return
         #
         fileName, _ = QFileDialog.getOpenFileName(self, "Select the file", os.path.expanduser('~'), "Python (*.py);;All Files (*)")
+        self.on_open_f(fileName)
+        
+    # related to on_open
+    def on_open_f(self, fileName):
+        if fileName == self.pageName:
+            MyDialog("Info", "It is the current document.", self)
+            return
         # new_tab_to_open = False
         if fileName:
             try:
@@ -252,6 +295,9 @@ class CustomMainWindow(QMainWindow):
                 fd.close()
                 self.setWindowTitle(fileName)
                 self.pageName = fileName
+                if not self.pageName+"\n" in self.pageNameHistory:
+                    self.btn_h_menu.addAction(self.pageName)
+                    self.pageNameHistory.append(self.pageName+"\n")
             except Exception as E:
                 MyDialog("Error", str(E), self)
         #
@@ -350,6 +396,7 @@ class CustomMainWindow(QMainWindow):
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
+            # 
             self.__editor.insertAt(self.STRCOMM, line, 0)
     
     #
@@ -379,6 +426,7 @@ class CustomMainWindow(QMainWindow):
     
     # insert a character if a certain one has been typed
     def on_k(self, id):
+        # 40 ( - 39 ' - 34 " - 91 [ - 123 {
         if AUTOCLOSE:
             if id == 40:
                 self.__editor.insert(")")
@@ -395,7 +443,14 @@ class CustomMainWindow(QMainWindow):
         if not self.isModified:
             self.isModified = True
             self.setWindowTitle("{} (modified)".format(self.pageName))
-            
+    
+    def wheelEvent(self, e):
+        if e.modifiers() & Qt.CTRL:
+            if e.angleDelta().y() < 0:
+                self.__editor.zoomOut()
+            else:
+                self.__editor.zoomIn()
+    
     def __btn_action(self):
         if self.isModified:
             ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
@@ -407,6 +462,14 @@ class CustomMainWindow(QMainWindow):
         self.on_close()
     
     def on_close(self):
+        # save the history
+        try:
+            with open("pyeditorh.txt", "w") as ff:
+                for el in self.pageNameHistory:
+                    ff.write(el)
+        except Exception as E:
+            MyDialog("Error", "Cannot save the file history.", self)
+        #
         new_w = self.size().width()
         new_h = self.size().height()
         if new_w != int(WINW) or new_h != int(WINH):
@@ -426,7 +489,6 @@ class CustomMainWindow(QMainWindow):
             except Exception as E:
                 MyDialog("Error", str(E), self)
         qApp.quit()
-
 
 # simple dialog message
 # type - message - parent
@@ -516,7 +578,7 @@ class searchDialog(QDialog):
                 self.first_found = ret
             else:
                 self.editor.findNext()
-        
+    
     def getValue(self):
         return self.Value
 
