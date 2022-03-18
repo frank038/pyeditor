@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.4.2
+# V 0.4.2.1
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -75,15 +75,16 @@ class MyQsciScintilla(QsciScintilla):
     
     def contextMenuEvent(self, e):
         menu = self.createStandardContextMenu()
-        menu.addSeparator()
-        #
-        customAction1 = QAction("Uppercase")
-        customAction1.triggered.connect(self.on_customAction1)
-        menu.addAction(customAction1)
-        #
-        customAction2 = QAction("Lowercase")
-        customAction2.triggered.connect(self.on_customAction2)
-        menu.addAction(customAction2)
+        if not self.isReadOnly():
+            menu.addSeparator()
+            #
+            customAction1 = QAction("Uppercase")
+            customAction1.triggered.connect(self.on_customAction1)
+            menu.addAction(customAction1)
+            #
+            customAction2 = QAction("Lowercase")
+            customAction2.triggered.connect(self.on_customAction2)
+            menu.addAction(customAction2)
         #
         menu.exec_(e.globalPos())
         
