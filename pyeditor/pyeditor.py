@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.3
+# V 0.4
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -68,6 +68,37 @@ except:
         pass
     sys.exit(app.exec_())
 #######################
+
+class MyQsciScintilla(QsciScintilla):
+    def __init__(self):
+        super(MyQsciScintilla, self).__init__()
+    
+    def contextMenuEvent(self, e):
+        menu = self.createStandardContextMenu()
+        menu.addSeparator()
+        #
+        customAction1 = QAction("Uppercase")
+        customAction1.triggered.connect(self.on_customAction1)
+        menu.addAction(customAction1)
+        #
+        customAction2 = QAction("Lowercase")
+        customAction2.triggered.connect(self.on_customAction2)
+        menu.addAction(customAction2)
+        #
+        menu.exec_(e.globalPos())
+        
+    def on_customAction1(self):
+        if not self.hasSelectedText():
+            return
+        #
+        self.replaceSelectedText(self.selectedText().upper())
+                    
+    def on_customAction2(self):
+        if not self.hasSelectedText():
+            return
+        #
+        self.replaceSelectedText(self.selectedText().lower())
+    
 
 class CustomMainWindow(QMainWindow):
     def __init__(self):
@@ -175,7 +206,8 @@ class CustomMainWindow(QMainWindow):
         self.btn_box.addWidget(self.btn_uncomment)
         #
         # ----------------------------------------
-        self.__editor = QsciScintilla()
+        # self.__editor = QsciScintilla()
+        self.__editor = MyQsciScintilla()
         #
         try:
             if os.path.exists(self.pageName):
@@ -219,14 +251,20 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setTabIndents(True)
         self.__editor.setAutoIndent(True)
         self.__editor.setBackspaceUnindents(True)
+        
         # a character has been typed
         self.__editor.SCN_CHARADDED.connect(self.on_k)
+        
+        # the text has been modified
+        self.__editor.modificationChanged.connect(self.on_text_changed)
+        
         # Caret
         # ---------
         self.__editor.setCaretForegroundColor(QColor(CARETFORE))
         self.__editor.setCaretLineVisible(True)
         self.__editor.setCaretLineBackgroundColor(QColor(CARETBACK))
         self.__editor.setCaretWidth(CARETWIDTH)
+
         # Margins
         # -----------
         # Margin 0 = Line nr margin
@@ -250,6 +288,11 @@ class CustomMainWindow(QMainWindow):
         self.__lyt.addWidget(self.__editor)
         #
         self.show()
+    
+    
+    def on_text_changed(self):
+        self.isModified = True
+        self.setWindowTitle("{} (modified)".format(self.pageName))
     
     # open a file from the history
     def on_h_menu(self, action):
@@ -396,7 +439,7 @@ class CustomMainWindow(QMainWindow):
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
-            # 
+            #
             self.__editor.insertAt(self.STRCOMM, line, 0)
     
     #
@@ -489,6 +532,7 @@ class CustomMainWindow(QMainWindow):
             except Exception as E:
                 MyDialog("Error", str(E), self)
         qApp.quit()
+    
 
 # simple dialog message
 # type - message - parent
@@ -578,6 +622,13 @@ class searchDialog(QDialog):
                 self.first_found = ret
             else:
                 self.editor.findNext()
+        
+    
+    # def on_accept(self):
+        # if self.win_list.currentItem():
+            # data_get = self.win_list.currentItem().text()
+            # self.Value = data_get
+        # self.close()
     
     def getValue(self):
         return self.Value
