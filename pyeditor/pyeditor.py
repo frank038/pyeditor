@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.4.2.1
+# V 0.4.2
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
