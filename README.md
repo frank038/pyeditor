@@ -23,7 +23,7 @@ Features:
 - bash script support (switching in the gui)
 - history of opened files
 - zoom (Ctrl+mouse wheel)
-- lowercase/uppercase in the context menu
+- uppercase/lowercase in the contextual menu
 - configurable with its config file.
 
 ![My image](https://github.com/frank038/pyeditor/blob/main/image1.png)
