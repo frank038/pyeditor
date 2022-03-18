@@ -30,5 +30,7 @@ CARETBACK="#1f0000ff"
 CARETWIDTH=4
 # margin text colour
 MARGINFOREGROUND="#ff888888"
+# limit the number of entries in the history
+HISTORYLIMIT=10
 # the width of the dialogs
 DIALOGWIDTH=600

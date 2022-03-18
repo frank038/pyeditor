@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.4
+# V 0.4.1
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -508,7 +508,7 @@ class CustomMainWindow(QMainWindow):
         # save the history
         try:
             with open("pyeditorh.txt", "w") as ff:
-                for el in self.pageNameHistory:
+                for el in self.pageNameHistory[0:HISTORYLIMIT]:
                     ff.write(el)
         except Exception as E:
             MyDialog("Error", "Cannot save the file history.", self)
