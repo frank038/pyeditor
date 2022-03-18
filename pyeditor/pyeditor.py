@@ -167,17 +167,18 @@ class CustomMainWindow(QMainWindow):
             if os.path.exists(filePath):
                 self.pageName = filePath
                 self.setWindowTitle("{}".format(self.pageName))
-                #
-                for el in self.pageNameHistory[::-1]:
-                    if el.rstrip("\n") == self.pageName:
-                        continue
-                    self.btn_h_menu.addAction(el.rstrip("\n"))
-                # populate the menu - opened doc at last position
-                self.btn_h_menu.addAction(self.pageName)
-                # save into the list once
-                if self.pageName+"\n" in self.pageNameHistory:
-                    self.pageNameHistory.remove(self.pageName+"\n")
-                self.pageNameHistory.append(self.pageName+"\n")
+        else:
+            for el in self.pageNameHistory[::-1]:
+                if el.rstrip("\n") == self.pageName:
+                    continue
+                self.btn_h_menu.addAction(el.rstrip("\n"))
+        if self.pageName:
+            # populate the menu - opened doc at last position
+            self.btn_h_menu.addAction(self.pageName)
+            # save into the list once
+            if self.pageName+"\n" in self.pageNameHistory:
+                self.pageNameHistory.remove(self.pageName+"\n")
+            self.pageNameHistory.append(self.pageName+"\n")
         # buttons
         self.btn_box = QHBoxLayout()
         self.__lyt.addLayout(self.btn_box)
