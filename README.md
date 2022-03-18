@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.3 - Testing
+V. 0.4 - Testing
 
 Requires:
 - python3
@@ -23,6 +23,7 @@ Features:
 - bash script support (switching in the gui)
 - history of opened files
 - zoom (Ctrl+mouse wheel)
+- lowercase/uppercase in the context menu
 - configurable with its config file.
 
 ![My image](https://github.com/frank038/pyeditor/blob/main/image1.png)
