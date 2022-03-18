@@ -32,5 +32,7 @@ CARETWIDTH=4
 MARGINFOREGROUND="#ff888888"
 # limit the number of entries in the history
 HISTORYLIMIT=10
+# autocompletion after the . character separator
+USEWORDAUTOCOMLETION=1
 # the width of the dialogs
 DIALOGWIDTH=600

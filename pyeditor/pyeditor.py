@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.4.1
+# V 0.4.2
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -92,7 +92,7 @@ class MyQsciScintilla(QsciScintilla):
             return
         #
         self.replaceSelectedText(self.selectedText().upper())
-                    
+    
     def on_customAction2(self):
         if not self.hasSelectedText():
             return
@@ -139,7 +139,7 @@ class CustomMainWindow(QMainWindow):
         self.btn_box0.addWidget(self.btn_open)
         #
         self.lang_combo = QComboBox()
-        self.lang_combo.addItems(["python", "bash"])
+        self.lang_combo.addItems(["python", "bash", "html"])
         self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         self.btn_box0.addWidget(self.lang_combo)
         #
@@ -233,6 +233,8 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setAutoCompletionUseSingle(QsciScintilla.AcusNever)
         self.__editor.autoCompleteFromDocument()
         self.__editor.setAutoCompletionSource(QsciScintilla.AcsDocument)
+        if USEWORDAUTOCOMLETION:
+            self.__editor.setAutoCompletionWordSeparators(["."])
         # End-of-line mode
         # --------------------
         if ENDOFLINE == "unix":
@@ -264,7 +266,7 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setCaretLineVisible(True)
         self.__editor.setCaretLineBackgroundColor(QColor(CARETBACK))
         self.__editor.setCaretWidth(CARETWIDTH)
-
+        
         # Margins
         # -----------
         # Margin 0 = Line nr margin
@@ -273,9 +275,12 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
         self.__editor.setMarginsFont(self.__myFont)
         #
+        # self.__lexer = MyLexer(self.__editor)
         self.__lexer = QsciLexerPython(self.__editor)
         self.__lexer.setDefaultFont(self.__myFont)
         self.__editor.setLexer(self.__lexer)
+        #
+        
         ##
         # editor background color
         self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
@@ -283,12 +288,14 @@ class CustomMainWindow(QMainWindow):
         self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerPython.Comment)
         # font
         self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
-        # Add editor to layout
+        
+        # ! Add editor to layout !
         # -------------------------
         self.__lyt.addWidget(self.__editor)
+        # 
+        self.__editor.setContextMenuPolicy(Qt.DefaultContextMenu)
         #
         self.show()
-    
     
     def on_text_changed(self):
         self.isModified = True
@@ -349,6 +356,7 @@ class CustomMainWindow(QMainWindow):
     #
     def on_lang_combo(self, idx):
         if idx == 0:
+            self.STRCOMM = "# "
             self.__lexer = QsciLexerPython(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
@@ -361,7 +369,10 @@ class CustomMainWindow(QMainWindow):
             # Margin
             self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
             self.__editor.setMarginsFont(self.__myFont)
+            #
+            self.__editor.setAutoCompletionCaseSensitivity(True)
         elif idx == 1:
+            self.STRCOMM = "# "
             self.__lexer = QsciLexerBash(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
@@ -374,7 +385,25 @@ class CustomMainWindow(QMainWindow):
             # Margin
             self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
             self.__editor.setMarginsFont(self.__myFont)
-        
+            #
+            self.__editor.setAutoCompletionCaseSensitivity(True)
+        elif idx == 2:
+            self.STRCOMM = "// "
+            self.__lexer = QsciLexerHTML(self.__editor)
+            self.__lexer.setDefaultFont(self.__myFont)
+            self.__editor.setLexer(self.__lexer)
+            # editor background color
+            self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
+            # # comment color
+            # self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerHTML.Comment)
+            # font
+            self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
+            # Margin
+            self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
+            self.__editor.setMarginsFont(self.__myFont)
+            # 
+            self.__editor.setAutoCompletionCaseSensitivity(True)
+    
     #
     def on_read_only(self, btn):
         if self.isModified:
@@ -439,7 +468,7 @@ class CustomMainWindow(QMainWindow):
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
-            #
+            # 
             self.__editor.insertAt(self.STRCOMM, line, 0)
     
     #
@@ -455,7 +484,7 @@ class CustomMainWindow(QMainWindow):
                     continue
                 #
                 self.__editor.setCursorPosition(line, 0)
-                self.__editor.setSelection(line, 0, line, 2)
+                self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
                 self.__editor.removeSelectedText()
         # no selection
         else:
@@ -463,9 +492,8 @@ class CustomMainWindow(QMainWindow):
             if self.__editor.text(line) == "":
                 return
             self.__editor.setCursorPosition(line, 0)
-            self.__editor.setSelection(line, 0, line, 2)
+            self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
             self.__editor.removeSelectedText()
-    
     
     # insert a character if a certain one has been typed
     def on_k(self, id):
@@ -508,7 +536,7 @@ class CustomMainWindow(QMainWindow):
         # save the history
         try:
             with open("pyeditorh.txt", "w") as ff:
-                for el in self.pageNameHistory[0:HISTORYLIMIT]:
+                for el in self.pageNameHistory[-HISTORYLIMIT:]:
                     ff.write(el)
         except Exception as E:
             MyDialog("Error", "Cannot save the file history.", self)
