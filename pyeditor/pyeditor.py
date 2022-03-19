@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.4.2
+# V 0.4.2.1
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -140,7 +140,8 @@ class CustomMainWindow(QMainWindow):
         self.btn_box0.addWidget(self.btn_open)
         #
         self.lang_combo = QComboBox()
-        self.lang_combo.addItems(["python", "bash", "html"])
+        # self.lang_combo.addItems(["python", "bash", "html"])
+        self.lang_combo.addItems(["python", "bash"])
         self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         self.btn_box0.addWidget(self.lang_combo)
         #
