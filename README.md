@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.4.2 - Testing (full usable)
+V. 0.4.2.1 - Testing (full usable)
 
 Requires:
 - python3
