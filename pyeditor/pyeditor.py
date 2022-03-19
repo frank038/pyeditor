@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.4.2.1
+# V 0.4.3
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -140,8 +140,8 @@ class CustomMainWindow(QMainWindow):
         self.btn_box0.addWidget(self.btn_open)
         #
         self.lang_combo = QComboBox()
-        # self.lang_combo.addItems(["python", "bash", "html"])
-        self.lang_combo.addItems(["python", "bash"])
+        self.lang_combo.addItems(["python", "bash", "cpp styles"])
+        # self.lang_combo.addItems(["python", "bash", "cpp styles", "html"])
         self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         self.btn_box0.addWidget(self.lang_combo)
         #
@@ -392,7 +392,7 @@ class CustomMainWindow(QMainWindow):
             self.__editor.setAutoCompletionCaseSensitivity(True)
         elif idx == 2:
             self.STRCOMM = "// "
-            self.__lexer = QsciLexerHTML(self.__editor)
+            self.__lexer = QsciLexerCPP(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
             # editor background color
@@ -406,6 +406,22 @@ class CustomMainWindow(QMainWindow):
             self.__editor.setMarginsFont(self.__myFont)
             # 
             self.__editor.setAutoCompletionCaseSensitivity(True)
+        # elif idx == 3:
+            # self.STRCOMM = "// "
+            # self.__lexer = QsciLexerHTML(self.__editor)
+            # self.__lexer.setDefaultFont(self.__myFont)
+            # self.__editor.setLexer(self.__lexer)
+            # # editor background color
+            # self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
+            # # # comment color
+            # # self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerHTML.Comment)
+            # # font
+            # self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
+            # # Margin
+            # self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
+            # self.__editor.setMarginsFont(self.__myFont)
+            # # 
+            # self.__editor.setAutoCompletionCaseSensitivity(True)
     
     #
     def on_read_only(self, btn):
@@ -486,17 +502,19 @@ class CustomMainWindow(QMainWindow):
                 if self.__editor.text(line) == "":
                     continue
                 #
-                self.__editor.setCursorPosition(line, 0)
-                self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
-                self.__editor.removeSelectedText()
+                if self.__editor.text(line)[0:len(self.STRCOMM)] == self.STRCOMM:
+                    self.__editor.setCursorPosition(line, 0)
+                    self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
+                    self.__editor.removeSelectedText()
         # no selection
         else:
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
-            self.__editor.setCursorPosition(line, 0)
-            self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
-            self.__editor.removeSelectedText()
+            if self.__editor.text(line)[0:len(self.STRCOMM)] == self.STRCOMM:
+                self.__editor.setCursorPosition(line, 0)
+                self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
+                self.__editor.removeSelectedText()
     
     # insert a character if a certain one has been typed
     def on_k(self, id):
