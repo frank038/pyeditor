@@ -25,6 +25,7 @@ Features:
 - history of opened files
 - zoom (Ctrl+mouse wheel)
 - uppercase/lowercase in the contextual menu
+- style colours (almost) fully customizable
 - configurable with its config file.
 
 ![My image](https://github.com/frank038/pyeditor/blob/main/image1.png)
