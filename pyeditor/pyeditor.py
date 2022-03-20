@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.4.3
+# V 0.5
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -93,7 +93,7 @@ class MyQsciScintilla(QsciScintilla):
             return
         #
         self.replaceSelectedText(self.selectedText().upper())
-    
+        
     def on_customAction2(self):
         if not self.hasSelectedText():
             return
@@ -116,10 +116,16 @@ class CustomMainWindow(QMainWindow):
         self.__lyt = QVBoxLayout()
         self.__frm.setLayout(self.__lyt)
         self.setCentralWidget(self.__frm)
+        # default font
         self.__myFont = QFont()
         self.__myFont.setFamily(FONTFAMILY)
         self.__myFont.setPointSize(FONTSIZE)
         #
+        # default bold font
+        self.__myFontB = QFont()
+        self.__myFontB.setFamily(FONTFAMILY)
+        self.__myFontB.setPointSize(FONTSIZE)
+        self.__myFontB.setWeight(QFont.Black)
         # ------------------
         self.btn_box0 = QHBoxLayout()
         self.__lyt.addLayout(self.btn_box0)
@@ -140,8 +146,7 @@ class CustomMainWindow(QMainWindow):
         self.btn_box0.addWidget(self.btn_open)
         #
         self.lang_combo = QComboBox()
-        self.lang_combo.addItems(["python", "bash", "cpp styles"])
-        # self.lang_combo.addItems(["python", "bash", "cpp styles", "html"])
+        self.lang_combo.addItems(["python", "bash", "javascript"])
         self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         self.btn_box0.addWidget(self.lang_combo)
         #
@@ -173,6 +178,7 @@ class CustomMainWindow(QMainWindow):
                 if el.rstrip("\n") == self.pageName:
                     continue
                 self.btn_h_menu.addAction(el.rstrip("\n"))
+        #
         if self.pageName:
             # populate the menu - opened doc at last position
             self.btn_h_menu.addAction(self.pageName)
@@ -223,12 +229,8 @@ class CustomMainWindow(QMainWindow):
         #
         self.__editor.setLexer(None)            # We install lexer later
         self.__editor.setUtf8(True)             # Set encoding to UTF-8
-        self.__editor.setFont(self.__myFont)    # Gets overridden by lexer later on
         # Brace matching
         self.__editor.setBraceMatching(QsciScintilla.SloppyBraceMatch)
-        self.__editor.setMatchedBraceBackgroundColor(QColor(MATCHEDBRACECOLOR))
-        # selected word colour
-        self.__editor.setSelectionBackgroundColor(QColor(SELECTIONBACKGROUNDCOLOR))
         #####
         self.__editor.setAutoCompletionThreshold(AUTOCOMPLETITION_CHARS)
         self.__editor.setAutoCompletionCaseSensitivity(True)
@@ -238,6 +240,11 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setAutoCompletionSource(QsciScintilla.AcsDocument)
         if USEWORDAUTOCOMLETION:
             self.__editor.setAutoCompletionWordSeparators(["."])
+        # # Text wrapping
+        # # -----------------
+        # self.__editor.setWrapMode(QsciScintilla.WrapWord)
+        # self.__editor.setWrapVisualFlags(QsciScintilla.WrapFlagByText)
+        # self.__editor.setWrapIndentMode(QsciScintilla.WrapIndentIndented)
         # End-of-line mode
         # --------------------
         if ENDOFLINE == "unix":
@@ -265,9 +272,7 @@ class CustomMainWindow(QMainWindow):
         
         # Caret
         # ---------
-        self.__editor.setCaretForegroundColor(QColor(CARETFORE))
         self.__editor.setCaretLineVisible(True)
-        self.__editor.setCaretLineBackgroundColor(QColor(CARETBACK))
         self.__editor.setCaretWidth(CARETWIDTH)
         
         # Margins
@@ -275,30 +280,57 @@ class CustomMainWindow(QMainWindow):
         # Margin 0 = Line nr margin
         self.__editor.setMarginType(0, QsciScintilla.NumberMargin)
         self.__editor.setMarginWidth(0, "00000")
-        self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
-        self.__editor.setMarginsFont(self.__myFont)
-        #
-        # self.__lexer = MyLexer(self.__editor)
+        # 
         self.__lexer = QsciLexerPython(self.__editor)
         self.__lexer.setDefaultFont(self.__myFont)
         self.__editor.setLexer(self.__lexer)
         #
-        
-        ##
-        # editor background color
-        self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
-        # comment color
-        self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerPython.Comment)
         # font
         self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
         
         # ! Add editor to layout !
         # -------------------------
         self.__lyt.addWidget(self.__editor)
-        # 
+        #
         self.__editor.setContextMenuPolicy(Qt.DefaultContextMenu)
+        self.__editor.addAction(QAction("ciao"))
+        # set the theme colours
+        self.on_theme()
+        # set the default styles to python custom styles
+        self.lpython()
         #
         self.show()
+    
+    def on_theme(self):
+        if DARKTHEME:
+            self.__editor.setMarginsForegroundColor(QColor(DMARGINFOREGROUND))
+            self.__editor.setMarginsBackgroundColor(QColor(DMARGINBACKGROUND))
+            self.__editor.setMarginsFont(self.__myFont)
+            # Caret
+            self.__editor.setCaretForegroundColor(QColor(DCARETFORE))
+            self.__editor.setCaretLineBackgroundColor(QColor(DCARETBACK))
+        else:
+            self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
+            self.__editor.setMarginsBackgroundColor(QColor(MARGINBACKGROUND))
+            self.__editor.setMarginsFont(self.__myFont)
+            # Caret
+            self.__editor.setCaretForegroundColor(QColor(CARETFORE))
+            self.__editor.setCaretLineBackgroundColor(QColor(CARETBACK))
+            #
+        # editor background color
+        if DARKTHEME:
+            self.__lexer.setPaper(QColor(DEDITORBACKCOLOR))
+        else:
+            self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
+        # Brace matching
+        if DARKTHEME:
+            self.__editor.setMatchedBraceBackgroundColor(QColor(DMATCHEDBRACECOLOR))
+            # selected word colour
+            self.__editor.setSelectionBackgroundColor(QColor(DSELECTIONBACKGROUNDCOLOR))
+        else:
+            self.__editor.setMatchedBraceBackgroundColor(QColor(MATCHEDBRACECOLOR))
+            # selected word colour
+            self.__editor.setSelectionBackgroundColor(QColor(SELECTIONBACKGROUNDCOLOR))
     
     def on_text_changed(self):
         self.isModified = True
@@ -356,6 +388,306 @@ class CustomMainWindow(QMainWindow):
         #
         self.isModified = False
     
+    def lpython(self):
+        if not CUSTOMCOLORS:
+            return
+        if DARKTHEME:
+            # Default
+            self.__lexer.setColor(QColor(PDDEFAULT), 0)
+            # Comment
+            self.__lexer.setFont(self.__myFont, 1)
+            self.__lexer.setColor(QColor(PDCOMMENT), 1)
+            # Number
+            self.__lexer.setColor(QColor(PDNUMBER), 2)
+            # Double-quoted string
+            self.__lexer.setFont(self.__myFont, 3)
+            self.__lexer.setColor(QColor(PDDOUBLEQ), 3)
+            # Single-quoted string
+            self.__lexer.setFont(self.__myFont, 4)
+            self.__lexer.setColor(QColor(PDSINGELQ), 4)
+            # Keyword
+            self.__lexer.setFont(self.__myFontB, 5)
+            self.__lexer.setColor(QColor(PDKEYW), 5)
+            # Triple single-quoted string
+            self.__lexer.setColor(QColor(PDTRIPLESQ), 6)
+            # Triple double-quoted string
+            self.__lexer.setColor(QColor(PDTRIPLEDQ), 7)
+            # Class name
+            self.__lexer.setFont(self.__myFontB, 8)
+            self.__lexer.setColor(QColor(PDCLASSNAME), 8)
+            # Function or method name
+            self.__lexer.setColor(QColor(PDFUNCTION), 9)
+            # Operator
+            self.__lexer.setColor(QColor(PDOPERATOR), 10)
+            # Identifier
+            self.__lexer.setColor(QColor(PDIDENTIFIER), 11)
+            # Comment block
+            self.__lexer.setColor(QColor(PDCOMMENTB), 12)
+            # Unclosed string
+            self.__lexer.setColor(QColor(PDUNCLOSEDSTRING), 13)
+            # Highlighted identifier
+            self.__lexer.setColor(QColor(PDHIGHLIGHTED), 14)
+            # Decorator
+            self.__lexer.setFont(self.__myFontB, 15)
+            self.__lexer.setColor(QColor(PDDECORATOR), 15)
+        else:
+            # Default
+            self.__lexer.setColor(QColor(PDEFAULT), 0)
+            # Comment
+            self.__lexer.setFont(self.__myFont, 1)
+            self.__lexer.setColor(QColor(PCOMMENT), 1)
+            # Number
+            self.__lexer.setColor(QColor(PNUMBER), 2)
+            # Double-quoted string
+            self.__lexer.setFont(self.__myFont, 3)
+            self.__lexer.setColor(QColor(PDOUBLEQ), 3)
+            # Single-quoted string
+            self.__lexer.setFont(self.__myFont, 4)
+            self.__lexer.setColor(QColor(PSINGELQ), 4)
+            # Keyword
+            self.__lexer.setFont(self.__myFontB, 5)
+            self.__lexer.setColor(QColor(PKEYW), 5)
+            # Triple single-quoted string
+            self.__lexer.setColor(QColor(PTRIPLESQ), 6)
+            # Triple double-quoted string
+            self.__lexer.setColor(QColor(PTRIPLEDQ), 7)
+            # Class name
+            self.__lexer.setFont(self.__myFontB, 8)
+            self.__lexer.setColor(QColor(PCLASSNAME), 8)
+            # Function or method name
+            self.__lexer.setColor(QColor(PFUNCTION), 9)
+            # Operator
+            self.__lexer.setColor(QColor(POPERATOR), 10)
+            # Identifier
+            self.__lexer.setColor(QColor(PIDENTIFIER), 11)
+            # Comment block
+            self.__lexer.setColor(QColor(PCOMMENTB), 12)
+            # Unclosed string
+            self.__lexer.setColor(QColor(PUNCLOSEDSTRING), 13)
+            # Highlighted identifier
+            self.__lexer.setColor(QColor(PHIGHLIGHTED), 14)
+            # Decorator
+            self.__lexer.setFont(self.__myFontB, 15)
+            self.__lexer.setColor(QColor(PDECORATOR), 15)
+    
+    def lbash(self):
+        if not CUSTOMCOLORS:
+            return
+        if DARKTHEME:
+            # Default
+            self.__lexer.setColor(QColor(BDDEFAULT), 0)
+            # Error
+            self.__lexer.setColor(QColor(BDERROR), 1)
+            # Comment
+            self.__lexer.setFont(self.__myFont, 2)
+            self.__lexer.setColor(QColor(BDCOMMENT), 2)
+            # Number
+            self.__lexer.setColor(QColor(BDNUMBER), 3)
+            # Keyword
+            self.__lexer.setFont(self.__myFontB, 4)
+            self.__lexer.setColor(QColor(BDKEYW), 4)
+            # Double-quoted string
+            self.__lexer.setFont(self.__myFont, 5)
+            self.__lexer.setColor(QColor(BDDOUBLEQ), 5)
+            # Single-quoted string
+            self.__lexer.setFont(self.__myFont, 6)
+            self.__lexer.setColor(QColor(BDSINGELQ), 6)
+            # Operator
+            self.__lexer.setColor(QColor(BDOPERATOR), 7)
+            # Identifier
+            self.__lexer.setColor(QColor(BDIDENTIFIER), 8)
+            # Scalar
+            self.__lexer.setColor(QColor(BDSCALAR), 9)
+            # Parameter expansion
+            self.__lexer.setColor(QColor(BDPAREXP), 10)
+            # Backticks
+            self.__lexer.setColor(QColor(BDBACKTICK), 11)
+            # Here document delimiter
+            self.__lexer.setColor(QColor(BDHDOCDEL), 12)
+            # Single-quoted here document
+            self.__lexer.setColor(QColor(BDSQHEREDOC), 13)
+        else:
+            # Default
+            self.__lexer.setColor(QColor(BDEFAULT), 0)
+            # Error
+            self.__lexer.setColor(QColor(BERROR), 1)
+            # Comment
+            self.__lexer.setFont(self.__myFont, 2)
+            self.__lexer.setColor(QColor(BCOMMENT), 2)
+            # Number
+            self.__lexer.setColor(QColor(BNUMBER), 3)
+            # Keyword
+            self.__lexer.setFont(self.__myFontB, 4)
+            self.__lexer.setColor(QColor(BKEYW), 4)
+            # Double-quoted string
+            self.__lexer.setFont(self.__myFont, 5)
+            self.__lexer.setColor(QColor(BDOUBLEQ), 5)
+            # Single-quoted string
+            self.__lexer.setFont(self.__myFont, 6)
+            self.__lexer.setColor(QColor(BSINGELQ), 6)
+            # Operator
+            self.__lexer.setColor(QColor(BOPERATOR), 7)
+            # Identifier
+            self.__lexer.setColor(QColor(BIDENTIFIER), 8)
+            # Scalar
+            self.__lexer.setColor(QColor(BSCALAR), 9)
+            # Parameter expansion
+            self.__lexer.setColor(QColor(BPAREXP), 10)
+            # Backticks
+            self.__lexer.setColor(QColor(BBACKTICK), 11)
+            # Here document delimiter
+            self.__lexer.setColor(QColor(BHDOCDEL), 12)
+            # Single-quoted here document
+            self.__lexer.setColor(QColor(BSQHEREDOC), 13)
+    
+    def ljavascript(self):
+        if not CUSTOMCOLORS:
+            return
+        if DARKTHEME:
+            # Default
+            self.__lexer.setColor(QColor(JDDEFAULT), 0)
+            # C comment
+            # C++ comment
+            # JavaDoc style C comment
+            # JavaDoc style pre-processor comment
+            self.__lexer.setFont(self.__myFont, 1)
+            self.__lexer.setColor(QColor(JDCOMMENT), 1)
+            self.__lexer.setFont(self.__myFont, 2)
+            self.__lexer.setColor(QColor(JDCOMMENT), 2)
+            self.__lexer.setFont(self.__myFont, 3)
+            self.__lexer.setColor(QColor(JDCOMMENT), 3)
+            self.__lexer.setFont(self.__myFont, 15)
+            self.__lexer.setColor(QColor(JDCOMMENT), 15)
+            self.__lexer.setColor(QColor(JDCOMMENT), 23)
+            self.__lexer.setColor(QColor(JDCOMMENT), 24)
+            # Number
+            self.__lexer.setColor(QColor(JDNUMBER), 4)
+            # Keyword
+            # JavaDoc keyword
+            self.__lexer.setFont(self.__myFontB, 5)
+            self.__lexer.setColor(QColor(JDKEYW), 5)
+            self.__lexer.setFont(self.__myFontB, 17)
+            self.__lexer.setColor(QColor(JDKEYW), 17)
+            # Double-quoted string
+            self.__lexer.setFont(self.__myFont, 6)
+            self.__lexer.setColor(QColor(JDDOUBLEQ), 6)
+            # Single-quoted string
+            self.__lexer.setFont(self.__myFont, 7)
+            self.__lexer.setColor(QColor(JDSINGELQ), 7)
+            # IDL UUID
+            self.__lexer.setColor(QColor(JDUUID), 8)
+            # Pre-processor block
+            self.__lexer.setColor(QColor(JDPREPB), 9)
+            # Operator
+            self.__lexer.setColor(QColor(JDOPERATOR), 10)
+            # Identifier
+            self.__lexer.setColor(QColor(JDIDENTIFIER), 11)
+            # Unclosed string
+            self.__lexer.setColor(QColor(JDUNCLOSEDS), 12)
+            # C# verbatim string
+            self.__lexer.setColor(QColor(JDCVERBS), 13)
+            # Regular expression
+            self.__lexer.setColor(QColor(JDREGESPR), 14)
+            # # JavaDoc style C++ comment
+            # pass
+            # Secondary keywords and identifiers
+            self.__lexer.setColor(QColor(JDSECKI), 16)
+            # # JavaDoc keyword
+            # pass
+            # JavaDoc keyword error
+            self.__lexer.setColor(QColor(JDJAVADOCERROR), 18)
+            # Global classes and typedefs
+            self.__lexer.setFont(self.__myFontB, 19)
+            self.__lexer.setColor(QColor(JDCLASSES), 19)
+            # C++ raw string
+            self.__lexer.setColor(QColor(JDDEFAULT), 20)
+            # Vala triple-quoted verbatim string
+            self.__lexer.setColor(QColor(JDDEFAULT), 21)
+            # Pike hash-quoted string
+            self.__lexer.setColor(QColor(JDPIKEHQS), 22)
+            # # Pre-processor C comment
+            # pass
+            # # JavaDoc style pre-processor comment
+            # pass
+            # User-defined literal
+            self.__lexer.setColor(QColor(JDUSERDLIT), 25)
+            # Task marker
+            self.__lexer.setColor(QColor(JDTASKMARKER), 26)
+            # Escape sequence
+            self.__lexer.setColor(QColor(JDESCAPES), 27)
+        else:
+            # Default
+            self.__lexer.setColor(QColor(JDEFAULT), 0)
+            # C comment
+            # C++ comment
+            # JavaDoc style C comment
+            # JavaDoc style pre-processor comment
+            self.__lexer.setFont(self.__myFont, 1)
+            self.__lexer.setColor(QColor(JCOMMENT), 1)
+            self.__lexer.setFont(self.__myFont, 2)
+            self.__lexer.setColor(QColor(JCOMMENT), 2)
+            self.__lexer.setFont(self.__myFont, 3)
+            self.__lexer.setColor(QColor(JCOMMENT), 3)
+            self.__lexer.setFont(self.__myFont, 15)
+            self.__lexer.setColor(QColor(JCOMMENT), 15)
+            self.__lexer.setColor(QColor(JCOMMENT), 23)
+            self.__lexer.setColor(QColor(JCOMMENT), 24)
+            # Number
+            self.__lexer.setColor(QColor(JNUMBER), 4)
+            # Keyword
+            # JavaDoc keyword
+            self.__lexer.setFont(self.__myFontB, 5)
+            self.__lexer.setColor(QColor(JKEYW), 5)
+            self.__lexer.setFont(self.__myFontB, 17)
+            self.__lexer.setColor(QColor(JKEYW), 17)
+            # Double-quoted string
+            self.__lexer.setFont(self.__myFont, 6)
+            self.__lexer.setColor(QColor(JDOUBLEQ), 6)
+            # Single-quoted string
+            self.__lexer.setFont(self.__myFont, 7)
+            self.__lexer.setColor(QColor(JSINGELQ), 7)
+            # IDL UUID
+            self.__lexer.setColor(QColor(JUUID), 8)
+            # Pre-processor block
+            self.__lexer.setColor(QColor(JPREPB), 9)
+            # Operator
+            self.__lexer.setColor(QColor(JOPERATOR), 10)
+            # Identifier
+            self.__lexer.setColor(QColor(JIDENTIFIER), 11)
+            # Unclosed string
+            self.__lexer.setColor(QColor(JUNCLOSEDS), 12)
+            # C# verbatim string
+            self.__lexer.setColor(QColor(JCVERBS), 13)
+            # Regular expression
+            self.__lexer.setColor(QColor(JREGESPR), 14)
+            # # JavaDoc style C++ comment
+            # pass
+            # Secondary keywords and identifiers
+            self.__lexer.setColor(QColor(JSECKI), 16)
+            # # JavaDoc keyword
+            # pass
+            # JavaDoc keyword error
+            self.__lexer.setColor(QColor(JJAVADOCERROR), 18)
+            # Global classes and typedefs
+            self.__lexer.setFont(self.__myFontB, 19)
+            self.__lexer.setColor(QColor(JCLASSES), 19)
+            # C++ raw string
+            self.__lexer.setColor(QColor(JDEFAULT), 20)
+            # Vala triple-quoted verbatim string
+            self.__lexer.setColor(QColor(JDEFAULT), 21)
+            # Pike hash-quoted string
+            self.__lexer.setColor(QColor(JPIKEHQS), 22)
+            # # Pre-processor C comment
+            # pass
+            # # JavaDoc style pre-processor comment
+            # pass
+            # User-defined literal
+            self.__lexer.setColor(QColor(JUSERDLIT), 25)
+            # Task marker
+            self.__lexer.setColor(QColor(JTASKMARKER), 26)
+            # Escape sequence
+            self.__lexer.setColor(QColor(JESCAPES), 27)
+    
     #
     def on_lang_combo(self, idx):
         if idx == 0:
@@ -363,66 +695,32 @@ class CustomMainWindow(QMainWindow):
             self.__lexer = QsciLexerPython(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
-            # editor background color
-            self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
-            # comment color
-            self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerPython.Comment)
-            # font
-            self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
-            # Margin
-            self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
-            self.__editor.setMarginsFont(self.__myFont)
-            #
             self.__editor.setAutoCompletionCaseSensitivity(True)
+            # set the styles
+            self.lpython()
+            # set the theme colours
+            self.on_theme()
         elif idx == 1:
             self.STRCOMM = "# "
             self.__lexer = QsciLexerBash(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
-            # editor background color
-            self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
-            # comment color
-            self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerBash.Comment)
-            # font
-            self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
-            # Margin
-            self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
-            self.__editor.setMarginsFont(self.__myFont)
-            #
             self.__editor.setAutoCompletionCaseSensitivity(True)
+            # set the styles
+            self.lbash()
+            # set the theme colours
+            self.on_theme()
         elif idx == 2:
             self.STRCOMM = "// "
-            self.__lexer = QsciLexerCPP(self.__editor)
+            self.__lexer = QsciLexerJavaScript(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
-            # editor background color
-            self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
-            # # comment color
-            # self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerHTML.Comment)
-            # font
-            self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
-            # Margin
-            self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
-            self.__editor.setMarginsFont(self.__myFont)
-            # 
             self.__editor.setAutoCompletionCaseSensitivity(True)
-        # elif idx == 3:
-            # self.STRCOMM = "// "
-            # self.__lexer = QsciLexerHTML(self.__editor)
-            # self.__lexer.setDefaultFont(self.__myFont)
-            # self.__editor.setLexer(self.__lexer)
-            # # editor background color
-            # self.__lexer.setPaper(QColor(EDITORBACKCOLOR))
-            # # # comment color
-            # # self.__lexer.setColor(QColor(COMMENTCOLOR), QsciLexerHTML.Comment)
-            # # font
-            # self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
-            # # Margin
-            # self.__editor.setMarginsForegroundColor(QColor(MARGINFOREGROUND))
-            # self.__editor.setMarginsFont(self.__myFont)
-            # # 
-            # self.__editor.setAutoCompletionCaseSensitivity(True)
-    
+            # set the styles
+            self.ljavascript()
+            # set the theme colours
+            self.on_theme()
+        
     #
     def on_read_only(self, btn):
         if self.isModified:
@@ -487,7 +785,7 @@ class CustomMainWindow(QMainWindow):
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
-            # 
+            #
             self.__editor.insertAt(self.STRCOMM, line, 0)
     
     #
@@ -511,10 +809,12 @@ class CustomMainWindow(QMainWindow):
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
+            #
             if self.__editor.text(line)[0:len(self.STRCOMM)] == self.STRCOMM:
                 self.__editor.setCursorPosition(line, 0)
                 self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
                 self.__editor.removeSelectedText()
+    
     
     # insert a character if a certain one has been typed
     def on_k(self, id):
@@ -546,6 +846,11 @@ class CustomMainWindow(QMainWindow):
     def __btn_action(self):
         if self.isModified:
             ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
+            if ret.getValue() == 0:
+                return
+        #
+        else:
+            ret = retDialogBox("Question", "Exit?", self)
             if ret.getValue() == 0:
                 return
         self.close()
@@ -671,13 +976,6 @@ class searchDialog(QDialog):
                 self.first_found = ret
             else:
                 self.editor.findNext()
-        
-    
-    # def on_accept(self):
-        # if self.win_list.currentItem():
-            # data_get = self.win_list.currentItem().text()
-            # self.Value = data_get
-        # self.close()
     
     def getValue(self):
         return self.Value
@@ -734,6 +1032,24 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     if GUISTYLE:
         QApplication.setStyle(QStyleFactory.create(GUISTYLE))
+    # Now use a palette to switch to dark colors
+    if DARKTHEME:
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        palette.setColor(QPalette.WindowText, Qt.white)
+        palette.setColor(QPalette.Base, QColor(25, 25, 25))
+        palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        palette.setColor(QPalette.ToolTipBase, Qt.black)
+        palette.setColor(QPalette.ToolTipText, Qt.white)
+        palette.setColor(QPalette.Text, Qt.white)
+        palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        palette.setColor(QPalette.ButtonText, Qt.white)
+        palette.setColor(QPalette.BrightText, Qt.red)
+        palette.setColor(QPalette.Link, QColor(42, 130, 218))
+        palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        palette.setColor(QPalette.HighlightedText, Qt.black)
+        app.setPalette(palette)
+    #
     myGUI = CustomMainWindow()
     sys.exit(app.exec_())
     
