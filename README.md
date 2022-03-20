@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.4.3 - Testing (full usable)
+V. 0.5 - Testing (full usable)
 
 Requires:
 - python3
@@ -21,7 +21,7 @@ Features:
 - line numbers
 - read only or modified tag in the titlebar
 - bash script support (switching in the gui)
-- cpp styles support (c, c++, javascript, etc.)
+- javascript script support (compatible with c, c++, c#, etc.)
 - history of opened files
 - zoom (Ctrl+mouse wheel)
 - uppercase/lowercase in the contextual menu
