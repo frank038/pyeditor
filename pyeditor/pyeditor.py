@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.5.6
+# V 0.6
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -97,6 +97,7 @@ class textLexer(QsciLexerCustom):
     
     
 class MyQsciScintilla(QsciScintilla):
+    keyPressed = pyqtSignal(str)
     def __init__(self):
         super(MyQsciScintilla, self).__init__()
     
@@ -122,7 +123,6 @@ class MyQsciScintilla(QsciScintilla):
     def on_customAction1(self):
         if not self.hasSelectedText():
             return
-        #
         self.replaceSelectedText(self.selectedText().upper())
         
     def on_customAction2(self):
@@ -137,14 +137,19 @@ class MyQsciScintilla(QsciScintilla):
         #
         self.replaceSelectedText(self.selectedText().swapcase())
     
+    def keyPressEvent(self, e):
+        QsciScintilla.keyPressEvent(self, e)
+        self.keyPressed.emit(e.text())
     
+    def mouseReleaseEvent(self, e):
+        QsciScintilla.mouseReleaseEvent(self, e)
+        self.keyPressed.emit(None)
 
 class CustomMainWindow(QMainWindow):
     def __init__(self):
         super(CustomMainWindow, self).__init__()
         self.setWindowIcon(QIcon("icons/progam.png"))
         self.resize(int(WINW), int(WINH))
-        #
         # has been modified
         self.isModified = False
         # Create frame and layout
@@ -216,6 +221,7 @@ class CustomMainWindow(QMainWindow):
                 if el.rstrip("\n") == self.pageName:
                     continue
                 self.btn_h_menu.addAction(el.rstrip("\n"))
+        #
         if self.pageName:
             # populate the menu - opened doc at last position
             self.btn_h_menu.addAction(self.pageName)
@@ -227,29 +233,37 @@ class CustomMainWindow(QMainWindow):
         self.btn_box = QHBoxLayout()
         self.__lyt.addLayout(self.btn_box)
         #
+        self.combo_tab = QComboBox()
+        self.combo_tab.addItems(["Space", "Tab"])
+        self.btn_box.addWidget(self.combo_tab)
+        #
+        self.combo_space = QComboBox()
+        self.combo_space.addItems(["2","3","4","5","6","7","8"])
+        self.btn_box.addWidget(self.combo_space)
+        #
         self.btn_ro = QPushButton("Read Only")
         self.btn_ro.clicked.connect(self.on_read_only)
-        self.btn_box.addWidget(self.btn_ro)
+        self.btn_box.addWidget(self.btn_ro, stretch=1)
         #
         self.btn_save = QPushButton("Save")
         self.btn_save.clicked.connect(self.on_save)
-        self.btn_box.addWidget(self.btn_save)
+        self.btn_box.addWidget(self.btn_save, stretch=1)
         #
         self.btn_save_as = QPushButton("Save as...")
         self.btn_save_as.clicked.connect(self.on_save_as)
-        self.btn_box.addWidget(self.btn_save_as)
+        self.btn_box.addWidget(self.btn_save_as, stretch=1)
         #
         self.btn_search = QPushButton("Search")
         self.btn_search.clicked.connect(self.on_search)
-        self.btn_box.addWidget(self.btn_search)
+        self.btn_box.addWidget(self.btn_search, stretch=1)
         #
         self.btn_comment = QPushButton("Comment")
         self.btn_comment.clicked.connect(self.on_btn_comment)
-        self.btn_box.addWidget(self.btn_comment)
+        self.btn_box.addWidget(self.btn_comment, stretch=1)
         #
         self.btn_uncomment = QPushButton("Uncomment")
         self.btn_uncomment.clicked.connect(self.on_btn_uncomment)
-        self.btn_box.addWidget(self.btn_uncomment)
+        self.btn_box.addWidget(self.btn_uncomment, stretch=1)
         #
         # ----------------------------------------
         # self.__editor = QsciScintilla()
@@ -292,13 +306,18 @@ class CustomMainWindow(QMainWindow):
         # ---------------
         self.__editor.setIndentationsUseTabs(USETAB)
         self.__editor.setTabWidth(TABWIDTH)
+        self.combo_tab.currentIndexChanged.connect(self.on_combo_tab)
+        self.combo_tab.setCurrentIndex(USETAB)
+        self.combo_space.currentIndexChanged.connect(self.on_combo_space)
+        self.combo_space.setCurrentIndex(max(TABWIDTH, 2)-2)
         self.__editor.setIndentationGuides(True)
         self.__editor.setTabIndents(True)
         self.__editor.setAutoIndent(True)
         self.__editor.setBackspaceUnindents(True)
         
         # a character has been typed
-        self.__editor.SCN_CHARADDED.connect(self.on_k)
+        # self.__editor.SCN_CHARADDED.connect(self.on_k)
+        self.__editor.keyPressed.connect(self.on_k)
         
         # the text has been modified
         self.__editor.modificationChanged.connect(self.on_text_changed)
@@ -319,20 +338,40 @@ class CustomMainWindow(QMainWindow):
         self.__lexer.setDefaultFont(self.__myFont)
         self.__editor.setLexer(self.__lexer)
         #
+        
         # font
         self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
+        
         # ! Add editor to layout !
         # -------------------------
-        self.__lyt.addWidget(self.__editor)
+        self.__lyt.addWidget(self.__editor, stretch=1)
         # 
+        
         self.__editor.setContextMenuPolicy(Qt.DefaultContextMenu)
+        
         self.__editor.addAction(QAction("ciao"))
+        #
+        #
+        if STATUSBAR:
+            self.statusBar = QStatusBar()
+            self.__lyt.addWidget(self.statusBar)
+            self.statusBar.showMessage("line: {0}/{1} column: {2}".format(1, 1, 0))
         # set the theme colours
         self.on_theme()
         # set the default styles to python custom styles
         self.lpython()
         #
         self.show()
+    
+    def on_combo_tab(self, idx):
+        self.__editor.setIndentationsUseTabs(bool(idx))
+        if idx:
+            self.combo_space.setEnabled(False)
+        else:
+            self.combo_space.setEnabled(True)
+        
+    def on_combo_space(self, idx):
+        self.__editor.setTabWidth(int(idx)+2)
     
     def on_theme(self):
         if DARKTHEME:
@@ -759,6 +798,7 @@ class CustomMainWindow(QMainWindow):
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
             # 
+            self.__editor.setAutoCompletionCaseSensitivity(True)
             # set the styles
             self.ljavascript()
             # set the theme colours
@@ -831,21 +871,21 @@ class CustomMainWindow(QMainWindow):
                     continue
                 #
                 i = 0
-                while self.__editor.text(line)[i] == " ":
+                while self.__editor.text(line)[i] == " " or self.__editor.text(line)[i] == "\t":
                     i += 1
                 #
-                self.__editor.insertAt(self.STRCOMM, line, 0)
+                self.__editor.insertAt(self.STRCOMM, line, i)
         # no selection
         else:
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
-            # 
+            #
             i = 0
-            while self.__editor.text(line)[i] == " ":
+            while self.__editor.text(line)[i] == " " or self.__editor.text(line)[i] == "\t":
                 i += 1
             #
-            self.__editor.insertAt(self.STRCOMM, line, 0)
+            self.__editor.insertAt(self.STRCOMM, line, i)
     
     #
     def on_btn_uncomment(self):
@@ -860,7 +900,7 @@ class CustomMainWindow(QMainWindow):
                     continue
                 #
                 i = 0
-                while self.__editor.text(line)[i] == " ":
+                while self.__editor.text(line)[i] == " " or self.__editor.text(line)[i] == "\t":
                     i += 1
                 if self.__editor.text(line)[i:i+len(self.STRCOMM)] == self.STRCOMM:
                     self.__editor.setCursorPosition(line, i)
@@ -873,7 +913,7 @@ class CustomMainWindow(QMainWindow):
                 return
             #
             i = 0
-            while self.__editor.text(line)[i] == " ":
+            while self.__editor.text(line)[i] == " " or self.__editor.text(line)[i] == "\t":
                 i += 1
             #
             if self.__editor.text(line)[i:i+len(self.STRCOMM)] == self.STRCOMM:
@@ -888,17 +928,26 @@ class CustomMainWindow(QMainWindow):
             return
         # 40 ( - 39 ' - 34 " - 91 [ - 123 {
         if AUTOCLOSE:
-            if id == 40:
+            # if id == 40:
+            if id == "(":
                 self.__editor.insert(")")
-            elif id == 39:
+            # elif id == 39:
+            elif id == "'":
                 self.__editor.insert("'")
-            elif id == 34:
+            # elif id == 34:
+            elif id == '"':
                 self.__editor.insert('"')
-            elif id == 91:
+            # elif id == 91:
+            elif id == "[":
                 self.__editor.insert(']')
-            elif id == 123:
+            # elif id == 123:
+            elif id == "{":
                 self.__editor.insert('}')
         #
+        if STATUSBAR:
+            line, column = self.__editor.getCursorPosition()
+            lines = self.__editor.lines()
+            self.statusBar.showMessage("line: {0}/{1} column: {2}".format(line+1, lines, column))
         # the document has been modified
         if not self.isModified:
             self.isModified = True
@@ -1044,7 +1093,7 @@ class searchDialog(QDialog):
                 self.first_found = ret
             else:
                 self.editor.findNext()
-    
+
     def getValue(self):
         return self.Value
 

@@ -1,5 +1,7 @@
 # gui style
 GUISTYLE="Fusion"
+# add the status bar: 0 no - 1 yes
+STATUSBAR=1
 # font famity to use for the editor
 FONTFAMILY="Monospace"
 # font size for the editor
@@ -24,7 +26,7 @@ AUTOCOMPLETITION_CHARS=3
 ENDOFLINE="unix"
 # indentation using tab (instead of spaces): False or True
 USETAB=False
-# the width of the indentation
+# the width of the indentation - minimun 2
 TABWIDTH=4
 # caret foreground colour
 CARETFORE="#ff0000ff"
