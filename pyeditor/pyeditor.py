@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.5.5
+# V 0.5.6
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -830,6 +830,10 @@ class CustomMainWindow(QMainWindow):
                 if self.__editor.text(line) == "":
                     continue
                 #
+                i = 0
+                while self.__editor.text(line)[i] == " ":
+                    i += 1
+                #
                 self.__editor.insertAt(self.STRCOMM, line, 0)
         # no selection
         else:
@@ -837,6 +841,10 @@ class CustomMainWindow(QMainWindow):
             if self.__editor.text(line) == "":
                 return
             # 
+            i = 0
+            while self.__editor.text(line)[i] == " ":
+                i += 1
+            #
             self.__editor.insertAt(self.STRCOMM, line, 0)
     
     #
