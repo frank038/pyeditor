@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.5
+# V 0.5.5
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -69,6 +69,33 @@ except:
     sys.exit(app.exec_())
 #######################
 
+class textLexer(QsciLexerCustom):
+    def __init__(self, __myFont, parent):
+        super(textLexer, self).__init__(parent)
+        self.__myFont = __myFont
+        # Default text settings
+        self.setDefaultColor(QColor("#ff000000"))
+        self.setDefaultPaper(QColor("#ffffffff"))
+        self.setDefaultFont(self.__myFont)
+        # Initialize fonts per style
+        self.setFont(self.__myFont, 0)
+        # Initialize colors per style
+        self.setColor(QColor("#ff000000"), 0)   # Style 0: black
+        # Initialize paper colors per style
+        self.setPaper(QColor("#ffffffff"), 0)   # Style 0: white
+    
+    def language(self):
+        return "TextStyle"
+    
+    def description(self, style):
+        if style == 0:
+            return "textStyle"
+    
+    def styleText(self, start, end):
+        self.startStyling(start)
+        self.setStyling(end - start, 0)
+    
+    
 class MyQsciScintilla(QsciScintilla):
     def __init__(self):
         super(MyQsciScintilla, self).__init__()
@@ -85,8 +112,12 @@ class MyQsciScintilla(QsciScintilla):
             customAction2 = QAction("Lowercase")
             customAction2.triggered.connect(self.on_customAction2)
             menu.addAction(customAction2)
+            #
+            customAction3 = QAction("Swapcase")
+            customAction3.triggered.connect(self.on_customAction3)
+            menu.addAction(customAction3)
         #
-        menu.exec_(e.globalPos())
+        menu.exec_(e.globalPos()+QPoint(5,5))
         
     def on_customAction1(self):
         if not self.hasSelectedText():
@@ -99,6 +130,13 @@ class MyQsciScintilla(QsciScintilla):
             return
         #
         self.replaceSelectedText(self.selectedText().lower())
+        
+    def on_customAction3(self):
+        if not self.hasSelectedText():
+            return
+        #
+        self.replaceSelectedText(self.selectedText().swapcase())
+    
     
 
 class CustomMainWindow(QMainWindow):
@@ -125,34 +163,34 @@ class CustomMainWindow(QMainWindow):
         self.__myFontB = QFont()
         self.__myFontB.setFamily(FONTFAMILY)
         self.__myFontB.setPointSize(FONTSIZE)
-        self.__myFontB.setWeight(QFont.Black)
+        self.__myFontB.setWeight(QFont.Bold)
         # ------------------
         self.btn_box0 = QHBoxLayout()
         self.__lyt.addLayout(self.btn_box0)
         #
         self.btn_h = QPushButton("H")
         self.btn_h.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Preferred)
-        self.btn_box0.addWidget(self.btn_h)
+        self.btn_box0.addWidget(self.btn_h, alignment=Qt.AlignLeft)
         self.btn_h_menu = QMenu()
         self.btn_h.setMenu(self.btn_h_menu)
         self.btn_h_menu.triggered.connect(self.on_h_menu)
         #
         self.btn_new = QPushButton("New")
         self.btn_new.clicked.connect(self.on_new)
-        self.btn_box0.addWidget(self.btn_new)
+        self.btn_box0.addWidget(self.btn_new, stretch=1)
         #
         self.btn_open = QPushButton("Open")
         self.btn_open.clicked.connect(self.on_open)
-        self.btn_box0.addWidget(self.btn_open)
+        self.btn_box0.addWidget(self.btn_open, stretch=1)
         #
         self.lang_combo = QComboBox()
-        self.lang_combo.addItems(["python", "bash", "javascript"])
+        self.lang_combo.addItems(["python", "bash", "javascript", "text"])
         self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
-        self.btn_box0.addWidget(self.lang_combo)
+        self.btn_box0.addWidget(self.lang_combo, stretch=1)
         #
         self.__btn = QPushButton("Exit")
         self.__btn.clicked.connect(self.__btn_action)
-        self.btn_box0.addWidget(self.__btn)
+        self.btn_box0.addWidget(self.__btn, stretch=1)
         # the history of opened files
         self.pageNameHistory = []
         try:
@@ -178,7 +216,6 @@ class CustomMainWindow(QMainWindow):
                 if el.rstrip("\n") == self.pageName:
                     continue
                 self.btn_h_menu.addAction(el.rstrip("\n"))
-        #
         if self.pageName:
             # populate the menu - opened doc at last position
             self.btn_h_menu.addAction(self.pageName)
@@ -240,11 +277,7 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setAutoCompletionSource(QsciScintilla.AcsDocument)
         if USEWORDAUTOCOMLETION:
             self.__editor.setAutoCompletionWordSeparators(["."])
-        # # Text wrapping
-        # # -----------------
-        # self.__editor.setWrapMode(QsciScintilla.WrapWord)
-        # self.__editor.setWrapVisualFlags(QsciScintilla.WrapFlagByText)
-        # self.__editor.setWrapIndentMode(QsciScintilla.WrapIndentIndented)
+        
         # End-of-line mode
         # --------------------
         if ENDOFLINE == "unix":
@@ -280,18 +313,18 @@ class CustomMainWindow(QMainWindow):
         # Margin 0 = Line nr margin
         self.__editor.setMarginType(0, QsciScintilla.NumberMargin)
         self.__editor.setMarginWidth(0, "00000")
-        # 
+        #
+        # self.__lexer = MyLexer(self.__editor)
         self.__lexer = QsciLexerPython(self.__editor)
         self.__lexer.setDefaultFont(self.__myFont)
         self.__editor.setLexer(self.__lexer)
         #
         # font
         self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
-        
         # ! Add editor to layout !
         # -------------------------
         self.__lyt.addWidget(self.__editor)
-        #
+        # 
         self.__editor.setContextMenuPolicy(Qt.DefaultContextMenu)
         self.__editor.addAction(QAction("ciao"))
         # set the theme colours
@@ -688,6 +721,14 @@ class CustomMainWindow(QMainWindow):
             # Escape sequence
             self.__lexer.setColor(QColor(JESCAPES), 27)
     
+    def ltext(self):
+        if DARKTHEME:
+            # Default
+            self.__lexer.setColor(QColor(PDDEFAULT), 0)
+        else:
+            # Default
+            self.__lexer.setColor(QColor(PDEFAULT), 0)
+    
     #
     def on_lang_combo(self, idx):
         if idx == 0:
@@ -695,6 +736,7 @@ class CustomMainWindow(QMainWindow):
             self.__lexer = QsciLexerPython(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
+            #
             self.__editor.setAutoCompletionCaseSensitivity(True)
             # set the styles
             self.lpython()
@@ -705,6 +747,7 @@ class CustomMainWindow(QMainWindow):
             self.__lexer = QsciLexerBash(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
+            #
             self.__editor.setAutoCompletionCaseSensitivity(True)
             # set the styles
             self.lbash()
@@ -715,9 +758,17 @@ class CustomMainWindow(QMainWindow):
             self.__lexer = QsciLexerJavaScript(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
-            self.__editor.setAutoCompletionCaseSensitivity(True)
+            # 
             # set the styles
             self.ljavascript()
+            # set the theme colours
+            self.on_theme()
+        elif idx == 3:
+            self.STRCOMM = "// "
+            self.__lexer = textLexer(self.__myFont, self.__editor)
+            self.__editor.setLexer(self.__lexer)
+            self.__editor.setAutoCompletionCaseSensitivity(True)
+            self.ltext()
             # set the theme colours
             self.on_theme()
         
@@ -785,7 +836,7 @@ class CustomMainWindow(QMainWindow):
             line, idx = self.__editor.getCursorPosition()
             if self.__editor.text(line) == "":
                 return
-            #
+            # 
             self.__editor.insertAt(self.STRCOMM, line, 0)
     
     #
@@ -800,9 +851,12 @@ class CustomMainWindow(QMainWindow):
                 if self.__editor.text(line) == "":
                     continue
                 #
-                if self.__editor.text(line)[0:len(self.STRCOMM)] == self.STRCOMM:
-                    self.__editor.setCursorPosition(line, 0)
-                    self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
+                i = 0
+                while self.__editor.text(line)[i] == " ":
+                    i += 1
+                if self.__editor.text(line)[i:i+len(self.STRCOMM)] == self.STRCOMM:
+                    self.__editor.setCursorPosition(line, i)
+                    self.__editor.setSelection(line, i, line, i+len(self.STRCOMM))
                     self.__editor.removeSelectedText()
         # no selection
         else:
@@ -810,14 +864,20 @@ class CustomMainWindow(QMainWindow):
             if self.__editor.text(line) == "":
                 return
             #
-            if self.__editor.text(line)[0:len(self.STRCOMM)] == self.STRCOMM:
-                self.__editor.setCursorPosition(line, 0)
-                self.__editor.setSelection(line, 0, line, len(self.STRCOMM))
+            i = 0
+            while self.__editor.text(line)[i] == " ":
+                i += 1
+            #
+            if self.__editor.text(line)[i:i+len(self.STRCOMM)] == self.STRCOMM:
+                self.__editor.setCursorPosition(line, i)
+                self.__editor.setSelection(line, i, line, i+len(self.STRCOMM))
                 self.__editor.removeSelectedText()
     
     
     # insert a character if a certain one has been typed
     def on_k(self, id):
+        if self.__editor.isReadOnly():
+            return
         # 40 ( - 39 ' - 34 " - 91 [ - 123 {
         if AUTOCLOSE:
             if id == 40:

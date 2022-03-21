@@ -8,8 +8,6 @@ FONTSIZE=14
 EDITORBACKCOLOR="#eeeeee"
 # editor background colour dark theme
 DEDITORBACKCOLOR="#262A2D"
-# # the colour of the comments
-# COMMENTCOLOR="#ff0000"
 # colour of matched braces
 MATCHEDBRACECOLOR="#ffff00"
 # colour of matched braces dark theme
@@ -285,3 +283,10 @@ JDUSERDLIT=JDDEFAULT
 JDTASKMARKER="#00ff00"
 # Escape sequence
 JDESCAPES="#ff0000"
+########## text
+### default theme
+# text colour
+TDEFAULT="#000000"
+### dark theme
+# text colour
+TDDEFAULT="#C5C8C6"
