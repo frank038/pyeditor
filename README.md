@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.5.6 - Development/Testing (full usable)
+V. 0.6 - Development/Testing (full usable)
 
 Requires:
 - python3
@@ -27,6 +27,7 @@ Features:
 - zoom (Ctrl+mouse wheel)
 - uppercase/lowercase in the contextual menu
 - style colours (almost) fully customizable
+- status bar
 - configurable with its config file.
 
 ![My image](https://github.com/frank038/pyeditor/blob/main/image1.png)
