@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.6
+# V 0.7
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -100,6 +100,8 @@ class MyQsciScintilla(QsciScintilla):
     keyPressed = pyqtSignal(str)
     def __init__(self):
         super(MyQsciScintilla, self).__init__()
+        # non so
+        self.SendScintilla(QsciScintilla.SCI_SETHSCROLLBAR, 1)
     
     def contextMenuEvent(self, e):
         menu = self.createStandardContextMenu()
@@ -123,6 +125,7 @@ class MyQsciScintilla(QsciScintilla):
     def on_customAction1(self):
         if not self.hasSelectedText():
             return
+        #
         self.replaceSelectedText(self.selectedText().upper())
         
     def on_customAction2(self):
@@ -136,15 +139,16 @@ class MyQsciScintilla(QsciScintilla):
             return
         #
         self.replaceSelectedText(self.selectedText().swapcase())
-    
+        
     def keyPressEvent(self, e):
         QsciScintilla.keyPressEvent(self, e)
         self.keyPressed.emit(e.text())
     
-    def mouseReleaseEvent(self, e):
-        QsciScintilla.mouseReleaseEvent(self, e)
+    def mousePressEvent(self, e):
+        QsciScintilla.mousePressEvent(self, e)
         self.keyPressed.emit(None)
-
+        
+        
 class CustomMainWindow(QMainWindow):
     def __init__(self):
         super(CustomMainWindow, self).__init__()
@@ -234,7 +238,7 @@ class CustomMainWindow(QMainWindow):
         self.__lyt.addLayout(self.btn_box)
         #
         self.combo_tab = QComboBox()
-        self.combo_tab.addItems(["Space", "Tab"])
+        self.combo_tab.addItems(["Spaces", "Tab"])
         self.btn_box.addWidget(self.combo_tab)
         #
         self.combo_space = QComboBox()
@@ -321,7 +325,6 @@ class CustomMainWindow(QMainWindow):
         
         # the text has been modified
         self.__editor.modificationChanged.connect(self.on_text_changed)
-        
         # Caret
         # ---------
         self.__editor.setCaretLineVisible(True)
@@ -332,15 +335,14 @@ class CustomMainWindow(QMainWindow):
         # Margin 0 = Line nr margin
         self.__editor.setMarginType(0, QsciScintilla.NumberMargin)
         self.__editor.setMarginWidth(0, "00000")
-        #
         # self.__lexer = MyLexer(self.__editor)
         self.__lexer = QsciLexerPython(self.__editor)
         self.__lexer.setDefaultFont(self.__myFont)
         self.__editor.setLexer(self.__lexer)
         #
         
-        # font
-        self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
+        # 
+        # self.__editor.selectionChanged.connect(self.on_sel)
         
         # ! Add editor to layout !
         # -------------------------
@@ -351,11 +353,10 @@ class CustomMainWindow(QMainWindow):
         
         self.__editor.addAction(QAction("ciao"))
         #
-        #
         if STATUSBAR:
             self.statusBar = QStatusBar()
             self.__lyt.addWidget(self.statusBar)
-            self.statusBar.showMessage("line: {0}/{1} column: {2}".format(1, 1, 0))
+            self.statusBar.showMessage("line: {0}/{1} column: {2}".format("-", "-", "-"))
         # set the theme colours
         self.on_theme()
         # set the default styles to python custom styles
@@ -421,6 +422,10 @@ class CustomMainWindow(QMainWindow):
             ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
             if ret.getValue() == 0:
                 return
+        else:
+            ret = retDialogBox("Question", "Create a new document?", self)
+            if ret.getValue() == 0:
+                return
         self.__editor.setText("")
         self.setWindowTitle("")
         self.isModified = False
@@ -433,16 +438,21 @@ class CustomMainWindow(QMainWindow):
             ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
             if ret.getValue() == 0:
                 return
+        else:
+            ret = retDialogBox("Question", "Open a new document?", self)
+            if ret.getValue() == 0:
+                return
         #
         fileName, _ = QFileDialog.getOpenFileName(self, "Select the file", os.path.expanduser('~'), "Python (*.py);;All Files (*)")
-        self.on_open_f(fileName)
+        if fileName:
+            self.on_open_f(fileName)
         
     # related to on_open
     def on_open_f(self, fileName):
         if fileName == self.pageName:
             MyDialog("Info", "It is the current document.", self)
             return
-        # new_tab_to_open = False
+        # 
         if fileName:
             try:
                 fd = QFile(fileName)
@@ -924,6 +934,10 @@ class CustomMainWindow(QMainWindow):
     
     # insert a character if a certain one has been typed
     def on_k(self, id):
+        #
+        if id == '':
+            return
+        #
         if self.__editor.isReadOnly():
             return
         # 40 ( - 39 ' - 34 " - 91 [ - 123 {
@@ -1003,7 +1017,7 @@ class CustomMainWindow(QMainWindow):
             except Exception as E:
                 MyDialog("Error", str(E), self)
         qApp.quit()
-    
+
 
 # simple dialog message
 # type - message - parent
@@ -1054,17 +1068,31 @@ class searchDialog(QDialog):
         if ret_text:
             self.line_edit.setText(ret_text)
         vbox.addWidget(self.line_edit)
+        #
+        self.chk_sens = QCheckBox("Case sensitive")
+        vbox.addWidget(self.chk_sens)
+        #
+        self.chk_word = QCheckBox("Word matching")
+        vbox.addWidget(self.chk_word)
+        #
+        self.chk = QCheckBox("Substitutions")
+        self.chk.stateChanged.connect(self.on_chk)
+        vbox.addWidget(self.chk)
+        #
+        self.line_edit_sub = QLineEdit()
+        self.line_edit_sub.setEnabled(False)
+        vbox.addWidget(self.line_edit_sub)
         ### button box
         hbox = QBoxLayout(QBoxLayout.LeftToRight)
         vbox.addLayout(hbox)
         #
-        button4 = QPushButton("Previous")
-        button4.clicked.connect(lambda:self.on_find(0))
-        hbox.addWidget(button4)
+        self.button4 = QPushButton("Previous")
+        self.button4.clicked.connect(lambda:self.on_find(0))
+        hbox.addWidget(self.button4)
         #
-        button2 = QPushButton("Next")
-        button2.clicked.connect(lambda:self.on_find(1))
-        hbox.addWidget(button2)
+        self.button2 = QPushButton("Next")
+        self.button2.clicked.connect(lambda:self.on_find(1))
+        hbox.addWidget(self.button2)
         #
         button3 = QPushButton("Close")
         button3.clicked.connect(self.close)
@@ -1078,22 +1106,49 @@ class searchDialog(QDialog):
         self.exec_()
         
     def on_find(self, ftype):
+        # substitutions
+        if ftype and self.chk.isChecked():
+            pline, pcol = self.editor.getCursorPosition()
+            ret = self.editor.findFirst(self.line_edit.text(), False, self.chk_sens.isChecked(), self.chk_word.isChecked(), False, True, 0, 0, False)
+            while ret:
+                self.editor.replace(self.line_edit_sub.text())
+                ret = self.editor.findNext()
+            #
+            self.editor.setCursorPosition(pline, pcol)
+            #
+            return
+        # searching
         line_edit_text = self.line_edit.text()
+        if line_edit_text == "":
+            return
         if ftype:
             if not self.first_found or not self.isForward:
                 self.isForward = True
-                ret = self.editor.findFirst(line_edit_text, False, False, False, False, True)#, -1, -1, True, True)
+                ret = self.editor.findFirst(line_edit_text, False, self.chk_sens.isChecked(), self.chk_word.isChecked(), False, True)
                 self.first_found = ret
             else:
                 self.editor.findNext()
         else:
             if not self.first_found or self.isForward:
                 self.isForward = False
-                ret = self.editor.findFirst(line_edit_text, False, False, False, False, False)
+                ret = self.editor.findFirst(line_edit_text, False, self.chk_sens.isChecked(), self.chk_word.isChecked(), False, False)
                 self.first_found = ret
             else:
                 self.editor.findNext()
-
+        
+    def on_chk(self, idx):
+        if idx:
+            self.line_edit_sub.setEnabled(True)
+            self.button4.setEnabled(False)
+            self.setWindowTitle("Replace")
+            self.button2.setText("Find all")
+        else:
+            self.line_edit_sub.setEnabled(False)
+            self.button4.setEnabled(True)
+            self.setWindowTitle("Search...")
+            self.button2.setText("Next")
+        
+    
     def getValue(self):
         return self.Value
 
