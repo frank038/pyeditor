@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.7.1
+# V 0.7.2
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -148,7 +148,7 @@ class MyQsciScintilla(QsciScintilla):
         QsciScintilla.mousePressEvent(self, e)
         self.keyPressed.emit(None)
         
-        
+
 class CustomMainWindow(QMainWindow):
     def __init__(self):
         super(CustomMainWindow, self).__init__()
@@ -272,7 +272,7 @@ class CustomMainWindow(QMainWindow):
         # ----------------------------------------
         # self.__editor = QsciScintilla()
         self.__editor = MyQsciScintilla()
-        #
+        # load the file passed as argument
         try:
             if os.path.exists(self.pageName):
                 fd = QFile(self.pageName)
@@ -335,20 +335,20 @@ class CustomMainWindow(QMainWindow):
         # Margin 0 = Line nr margin
         self.__editor.setMarginType(0, QsciScintilla.NumberMargin)
         self.__editor.setMarginWidth(0, "00000")
+        #
         # self.__lexer = MyLexer(self.__editor)
         self.__lexer = QsciLexerPython(self.__editor)
         self.__lexer.setDefaultFont(self.__myFont)
         self.__editor.setLexer(self.__lexer)
         #
         
-        # 
-        # self.__editor.selectionChanged.connect(self.on_sel)
+        # font
+        self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
         
         # ! Add editor to layout !
         # -------------------------
         self.__lyt.addWidget(self.__editor, stretch=1)
         # 
-        
         self.__editor.setContextMenuPolicy(Qt.DefaultContextMenu)
         
         self.__editor.addAction(QAction("ciao"))
@@ -429,6 +429,7 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setText("")
         self.setWindowTitle("")
         self.isModified = False
+        self.pageName = ""
         
     #
     def on_open(self):
@@ -465,10 +466,9 @@ class CustomMainWindow(QMainWindow):
                 if not self.pageName+"\n" in self.pageNameHistory:
                     self.btn_h_menu.addAction(self.pageName)
                     self.pageNameHistory.append(self.pageName+"\n")
+                self.isModified = False
             except Exception as E:
                 MyDialog("Error", str(E), self)
-        #
-        self.isModified = False
     
     def lpython(self):
         if not CUSTOMCOLORS:
@@ -839,7 +839,7 @@ class CustomMainWindow(QMainWindow):
     
     #
     def on_save_as(self):
-        fileName, _ = QFileDialog.getSaveFileName(self, "File Name...", self.pageName, "Python (*.py);;All Files (*)")
+        fileName, _ = QFileDialog.getSaveFileName(self, "File Name...", self.pageName or "document.py", "Python (*.py);;All Files (*)")
         if fileName:
             self.pageName = fileName
             self.on_save()
@@ -1016,7 +1016,7 @@ class CustomMainWindow(QMainWindow):
             except Exception as E:
                 MyDialog("Error", str(E), self)
         qApp.quit()
-
+    
 
 # simple dialog message
 # type - message - parent
