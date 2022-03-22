@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.6 - Development/Testing (full usable)
+V. 0.7 - Development/Testing (full usable)
 
 Requires:
 - python3
@@ -11,7 +11,7 @@ Requires:
 Features:
 - word autocompletition
 - braces autocompletition
-- string searching
+- string/word searching
 - comment/uncomment, also for a group of line of code
 - read only mode
 - saves its window size
