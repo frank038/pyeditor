@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.7
+# V 0.7.1
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -935,9 +935,6 @@ class CustomMainWindow(QMainWindow):
     # insert a character if a certain one has been typed
     def on_k(self, id):
         #
-        if id == '':
-            return
-        #
         if self.__editor.isReadOnly():
             return
         # 40 ( - 39 ' - 34 " - 91 [ - 123 {
@@ -964,6 +961,8 @@ class CustomMainWindow(QMainWindow):
             self.statusBar.showMessage("line: {0}/{1} column: {2}".format(line+1, lines, column))
         # the document has been modified
         if not self.isModified:
+            if id == '':
+                return
             self.isModified = True
             self.setWindowTitle("{} (modified)".format(self.pageName))
     
