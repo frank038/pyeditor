@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.7.2
+# V 0.7.3
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -1205,16 +1205,18 @@ if __name__ == '__main__':
         QApplication.setStyle(QStyleFactory.create(GUISTYLE))
     # Now use a palette to switch to dark colors
     if DARKTHEME:
+        # TEXTCOLOR = QColor("#C5C8C6")
+        TEXTCOLOR = QColor("#969896")
         palette = QPalette()
         palette.setColor(QPalette.Window, QColor(53, 53, 53))
-        palette.setColor(QPalette.WindowText, Qt.white)
+        palette.setColor(QPalette.WindowText, TEXTCOLOR)
         palette.setColor(QPalette.Base, QColor(25, 25, 25))
         palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
         palette.setColor(QPalette.ToolTipBase, Qt.black)
-        palette.setColor(QPalette.ToolTipText, Qt.white)
-        palette.setColor(QPalette.Text, Qt.white)
+        palette.setColor(QPalette.ToolTipText, TEXTCOLOR)
+        palette.setColor(QPalette.Text, TEXTCOLOR)
         palette.setColor(QPalette.Button, QColor(53, 53, 53))
-        palette.setColor(QPalette.ButtonText, Qt.white)
+        palette.setColor(QPalette.ButtonText, TEXTCOLOR)
         palette.setColor(QPalette.BrightText, Qt.red)
         palette.setColor(QPalette.Link, QColor(42, 130, 218))
         palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
