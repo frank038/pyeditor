@@ -24,8 +24,8 @@ DSELECTIONBACKGROUNDCOLOR=SELECTIONBACKGROUNDCOLOR
 AUTOCLOSE=True
 # amount of characters to show a list for autocompletation
 AUTOCOMPLETITION_CHARS=3
-# end of line mode: "unix" or "windows"
-ENDOFLINE="unix"
+# # DO NOT USE - end of line mode: "unix" or "windows"
+# ENDOFLINE="unix"
 # indentation using tab (instead of spaces): False or True
 USETAB=False
 # the width of the indentation - minimun 2

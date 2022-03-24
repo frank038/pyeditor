@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.8
+# V 0.8.1
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -119,6 +119,12 @@ class MyQsciScintilla(QsciScintilla):
             customAction3 = QAction("Swapcase")
             customAction3.triggered.connect(self.on_customAction3)
             menu.addAction(customAction3)
+            # 
+            menu.addSeparator()
+            #
+            customAction4 = QAction("Eol view/hide")
+            customAction4.triggered.connect(self.on_customAction4)
+            menu.addAction(customAction4)
         #
         menu.exec_(e.globalPos()+QPoint(5,5))
         
@@ -140,6 +146,9 @@ class MyQsciScintilla(QsciScintilla):
         #
         self.replaceSelectedText(self.selectedText().swapcase())
         
+    def on_customAction4(self):
+        self.setEolVisibility(not self.eolVisibility())
+    
     def keyPressEvent(self, e):
         QsciScintilla.keyPressEvent(self, e)
         self.keyPressed.emit(e.text())
@@ -251,9 +260,9 @@ class CustomMainWindow(QMainWindow):
         self.combo_space.addItems(["2","3","4","5","6","7","8"])
         self.btn_box.addWidget(self.combo_space)
         #
-        self.combo_eol = QComboBox()
-        self.combo_eol.addItems(["L","W"])
-        self.btn_box.addWidget(self.combo_eol)
+        # self.combo_eol = QComboBox()
+        # self.combo_eol.addItems(["L","W"])
+        # self.btn_box.addWidget(self.combo_eol)
         #
         self.btn_ro = QPushButton("Read Only")
         self.btn_ro.clicked.connect(self.on_read_only)
@@ -309,13 +318,13 @@ class CustomMainWindow(QMainWindow):
         if USEWORDAUTOCOMLETION:
             self.__editor.setAutoCompletionWordSeparators(["."])
         
-        # End-of-line mode
-        # --------------------
-        if ENDOFLINE == "unix":
-            self.__editor.setEolMode(QsciScintilla.EolUnix)
-        elif ENDOFLINE == "windows":
-            self.__editor.setEolMode(QsciScintilla.EolWindows)
-            self.combo_eol.setCurrentIndex(1)
+        # # End-of-line mode
+        # # --------------------
+        # if ENDOFLINE == "unix":
+            # self.__editor.setEolMode(QsciScintilla.EolUnix)
+        # elif ENDOFLINE == "windows":
+            # self.__editor.setEolMode(QsciScintilla.EolWindows)
+            # self.combo_eol.setCurrentIndex(1)
         #
         self.__editor.setEolVisibility(False)
         
@@ -327,7 +336,7 @@ class CustomMainWindow(QMainWindow):
         self.combo_tab.setCurrentIndex(USETAB)
         self.combo_space.currentIndexChanged.connect(self.on_combo_space)
         self.combo_space.setCurrentIndex(max(TABWIDTH, 2)-2)
-        self.combo_eol.currentIndexChanged.connect(self.on_eol)
+        # self.combo_eol.currentIndexChanged.connect(self.on_eol)
         self.__editor.setIndentationGuides(True)
         self.__editor.setTabIndents(True)
         self.__editor.setAutoIndent(True)
@@ -442,8 +451,8 @@ class CustomMainWindow(QMainWindow):
     def on_combo_space(self, idx):
         self.__editor.setTabWidth(int(idx)+2)
     
-    def on_eol(self, idx):
-        self.combo_eol.setCurrentIndex(idx)
+    # def on_eol(self, idx):
+        # self.combo_eol.setCurrentIndex(idx)
     
     def on_theme(self):
         if DARKTHEME:
