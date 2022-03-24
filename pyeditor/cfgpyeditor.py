@@ -1,3 +1,5 @@
+# type of editor - one from: python, bash, javascript, text
+EDITORTYPE="python"
 # gui style
 GUISTYLE="Fusion"
 # add the status bar: 0 no - 1 yes

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.7.3
+# V 0.8
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -152,7 +152,7 @@ class MyQsciScintilla(QsciScintilla):
 class CustomMainWindow(QMainWindow):
     def __init__(self):
         super(CustomMainWindow, self).__init__()
-        self.setWindowIcon(QIcon("icons/progam.png"))
+        self.setWindowIcon(QIcon("icons/program.svg"))
         self.resize(int(WINW), int(WINH))
         # has been modified
         self.isModified = False
@@ -194,7 +194,6 @@ class CustomMainWindow(QMainWindow):
         #
         self.lang_combo = QComboBox()
         self.lang_combo.addItems(["python", "bash", "javascript", "text"])
-        self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         self.btn_box0.addWidget(self.lang_combo, stretch=1)
         #
         self.__btn = QPushButton("Exit")
@@ -215,16 +214,23 @@ class CustomMainWindow(QMainWindow):
             sys.exit()
         #
         self.pageName = ""
+        afilename = None
         if len(sys.argv) > 1:
-            filePath = os.path.realpath(sys.argv[1])
-            if os.path.exists(filePath):
-                self.pageName = filePath
-                self.setWindowTitle("{}".format(self.pageName))
-        else:
-            for el in self.pageNameHistory[::-1]:
-                if el.rstrip("\n") == self.pageName:
-                    continue
-                self.btn_h_menu.addAction(el.rstrip("\n"))
+            if sys.argv[1] in ["-p", "-b", "-j", "-t"]:
+                if len(sys.argv) > 2:
+                    afilename = sys.argv[2]
+            else:
+                afilename = sys.argv[1]
+            if afilename:
+                filePath = os.path.realpath(afilename)
+                if os.path.exists(filePath) and os.path.isfile(filePath) and os.access(filePath, os.R_OK):
+                    self.pageName = filePath
+                    self.setWindowTitle("{}".format(self.pageName))
+        # for el in self.pageNameHistory[::-1]:
+        for el in self.pageNameHistory:
+            if el.rstrip("\n") == self.pageName:
+                continue
+            self.btn_h_menu.addAction(el.rstrip("\n"))
         #
         if self.pageName:
             # populate the menu - opened doc at last position
@@ -244,6 +250,10 @@ class CustomMainWindow(QMainWindow):
         self.combo_space = QComboBox()
         self.combo_space.addItems(["2","3","4","5","6","7","8"])
         self.btn_box.addWidget(self.combo_space)
+        #
+        self.combo_eol = QComboBox()
+        self.combo_eol.addItems(["L","W"])
+        self.btn_box.addWidget(self.combo_eol)
         #
         self.btn_ro = QPushButton("Read Only")
         self.btn_ro.clicked.connect(self.on_read_only)
@@ -273,12 +283,15 @@ class CustomMainWindow(QMainWindow):
         # self.__editor = QsciScintilla()
         self.__editor = MyQsciScintilla()
         # load the file passed as argument
+        filenotfound = 0
         try:
-            if os.path.exists(self.pageName):
+            if self.pageName and os.path.exists(self.pageName) and os.path.isfile(self.pageName) and os.access(self.pageName, os.R_OK):
                 fd = QFile(self.pageName)
                 fd.open(QIODevice.ReadOnly)
                 self.__editor.read(fd)
                 fd.close()
+            else:
+                filenotfound = 1
         except Exception as E:
             MyDialog("Error", str(E), self)
         #
@@ -302,10 +315,10 @@ class CustomMainWindow(QMainWindow):
             self.__editor.setEolMode(QsciScintilla.EolUnix)
         elif ENDOFLINE == "windows":
             self.__editor.setEolMode(QsciScintilla.EolWindows)
+            self.combo_eol.setCurrentIndex(1)
         #
         self.__editor.setEolVisibility(False)
-        # comment string
-        self.STRCOMM = "# "
+        
         # Indentation
         # ---------------
         self.__editor.setIndentationsUseTabs(USETAB)
@@ -314,6 +327,7 @@ class CustomMainWindow(QMainWindow):
         self.combo_tab.setCurrentIndex(USETAB)
         self.combo_space.currentIndexChanged.connect(self.on_combo_space)
         self.combo_space.setCurrentIndex(max(TABWIDTH, 2)-2)
+        self.combo_eol.currentIndexChanged.connect(self.on_eol)
         self.__editor.setIndentationGuides(True)
         self.__editor.setTabIndents(True)
         self.__editor.setAutoIndent(True)
@@ -335,23 +349,26 @@ class CustomMainWindow(QMainWindow):
         # Margin 0 = Line nr margin
         self.__editor.setMarginType(0, QsciScintilla.NumberMargin)
         self.__editor.setMarginWidth(0, "00000")
-        #
-        # self.__lexer = MyLexer(self.__editor)
-        self.__lexer = QsciLexerPython(self.__editor)
+        #######################
+        # # self.__lexer = MyLexer(self.__editor)
+        # self.__lexer = QsciLexerPython(self.__editor)
+        self.__lexer = textLexer(self.__myFont, self.__editor)
         self.__lexer.setDefaultFont(self.__myFont)
         self.__editor.setLexer(self.__lexer)
         #
         
         # font
         self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
+        ##################
+        # 
         
         # ! Add editor to layout !
         # -------------------------
         self.__lyt.addWidget(self.__editor, stretch=1)
         # 
+        
         self.__editor.setContextMenuPolicy(Qt.DefaultContextMenu)
         
-        self.__editor.addAction(QAction("ciao"))
         #
         if STATUSBAR:
             self.statusBar = QStatusBar()
@@ -359,11 +376,62 @@ class CustomMainWindow(QMainWindow):
             self.statusBar.showMessage("line: {0}/{1} column: {2}".format("-", "-", "-"))
         # set the theme colours
         self.on_theme()
-        # set the default styles to python custom styles
-        self.lpython()
+        #
+        isargument = 0
+        # set the default editor style from command line
+        if len(sys.argv) > 1:
+            if sys.argv[1] == "-p":
+                isargument = 1
+                self.lang_combo.setCurrentIndex(0)
+                self.on_lang_combo(0)
+                self.lpython()
+            elif sys.argv[1] == "-b":
+                isargument = 1
+                self.lang_combo.setCurrentIndex(1)
+                self.on_lang_combo(1)
+                self.lbash()
+            elif sys.argv[1] == "-j":
+                isargument = 1
+                self.lang_combo.setCurrentIndex(2)
+                self.on_lang_combo(2)
+                self.ljavascript()
+            elif sys.argv[1] == "-t":
+                isargument = 1
+                self.lang_combo.setCurrentIndex(3)
+                self.on_lang_combo(3)
+                self.ltext()
+        # or from config file
+        if isargument == 0:
+            if EDITORTYPE == "python":
+                self.lang_combo.setCurrentIndex(0)
+                self.on_lang_combo(0)
+                self.lpython()
+            elif EDITORTYPE == "bash":
+                self.lang_combo.setCurrentIndex(1)
+                self.on_lang_combo(1)
+                self.lbash()
+            elif EDITORTYPE == "javascript":
+                self.lang_combo.setCurrentIndex(2)
+                self.on_lang_combo(2)
+                self.ljavascript()
+            elif EDITORTYPE == "text":
+                self.lang_combo.setCurrentIndex(3)
+                self.on_lang_combo(3)
+                self.ltext()
+        self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
+        #
+        self.sufftype = ""
         #
         self.show()
-    
+        # 
+        if filenotfound and afilename:
+            MyDialog("Error", "The file\n\n{}\n\ndoesn't exist or it isn't readable.".format(afilename), self)
+        # file is not writable
+        if self.pageName and not os.access(self.pageName, os.W_OK):
+            self.__editor.setReadOnly(True)
+            self.btn_ro.setStyleSheet("QPushButton {color: green;}")
+            self.setWindowTitle("{} (read only)".format(self.pageName))
+        
     def on_combo_tab(self, idx):
         self.__editor.setIndentationsUseTabs(bool(idx))
         if idx:
@@ -373,6 +441,9 @@ class CustomMainWindow(QMainWindow):
         
     def on_combo_space(self, idx):
         self.__editor.setTabWidth(int(idx)+2)
+    
+    def on_eol(self, idx):
+        self.combo_eol.setCurrentIndex(idx)
     
     def on_theme(self):
         if DARKTHEME:
@@ -446,7 +517,10 @@ class CustomMainWindow(QMainWindow):
         #
         fileName, _ = QFileDialog.getOpenFileName(self, "Select the file", os.path.expanduser('~'), "Python (*.py);;All Files (*)")
         if fileName:
-            self.on_open_f(fileName)
+            if os.path.exists(fileName) and os.path.isfile(fileName) and os.access(fileName, os.R_OK):
+                self.on_open_f(fileName)
+            else:
+                MyDialog("Error", "Problem with the file.\nIt doesn't exist or it isn't readable.", self)
         
     # related to on_open
     def on_open_f(self, fileName):
@@ -632,6 +706,9 @@ class CustomMainWindow(QMainWindow):
             # C++ comment
             # JavaDoc style C comment
             # JavaDoc style pre-processor comment
+            # JavaDoc style C++ comment
+            # Pre-processor C comment
+            # JavaDoc style pre-processor comment
             self.__lexer.setFont(self.__myFont, 1)
             self.__lexer.setColor(QColor(JDCOMMENT), 1)
             self.__lexer.setFont(self.__myFont, 2)
@@ -670,12 +747,8 @@ class CustomMainWindow(QMainWindow):
             self.__lexer.setColor(QColor(JDCVERBS), 13)
             # Regular expression
             self.__lexer.setColor(QColor(JDREGESPR), 14)
-            # # JavaDoc style C++ comment
-            # pass
             # Secondary keywords and identifiers
             self.__lexer.setColor(QColor(JDSECKI), 16)
-            # # JavaDoc keyword
-            # pass
             # JavaDoc keyword error
             self.__lexer.setColor(QColor(JDJAVADOCERROR), 18)
             # Global classes and typedefs
@@ -687,10 +760,6 @@ class CustomMainWindow(QMainWindow):
             self.__lexer.setColor(QColor(JDDEFAULT), 21)
             # Pike hash-quoted string
             self.__lexer.setColor(QColor(JDPIKEHQS), 22)
-            # # Pre-processor C comment
-            # pass
-            # # JavaDoc style pre-processor comment
-            # pass
             # User-defined literal
             self.__lexer.setColor(QColor(JDUSERDLIT), 25)
             # Task marker
@@ -703,6 +772,9 @@ class CustomMainWindow(QMainWindow):
             # C comment
             # C++ comment
             # JavaDoc style C comment
+            # JavaDoc style pre-processor comment
+            # JavaDoc style C++ comment
+            # Pre-processor C comment
             # JavaDoc style pre-processor comment
             self.__lexer.setFont(self.__myFont, 1)
             self.__lexer.setColor(QColor(JCOMMENT), 1)
@@ -742,12 +814,8 @@ class CustomMainWindow(QMainWindow):
             self.__lexer.setColor(QColor(JCVERBS), 13)
             # Regular expression
             self.__lexer.setColor(QColor(JREGESPR), 14)
-            # # JavaDoc style C++ comment
-            # pass
             # Secondary keywords and identifiers
             self.__lexer.setColor(QColor(JSECKI), 16)
-            # # JavaDoc keyword
-            # pass
             # JavaDoc keyword error
             self.__lexer.setColor(QColor(JJAVADOCERROR), 18)
             # Global classes and typedefs
@@ -759,10 +827,6 @@ class CustomMainWindow(QMainWindow):
             self.__lexer.setColor(QColor(JDEFAULT), 21)
             # Pike hash-quoted string
             self.__lexer.setColor(QColor(JPIKEHQS), 22)
-            # # Pre-processor C comment
-            # pass
-            # # JavaDoc style pre-processor comment
-            # pass
             # User-defined literal
             self.__lexer.setColor(QColor(JUSERDLIT), 25)
             # Task marker
@@ -782,6 +846,7 @@ class CustomMainWindow(QMainWindow):
     def on_lang_combo(self, idx):
         if idx == 0:
             self.STRCOMM = "# "
+            self.sufftype = ".py"
             self.__lexer = QsciLexerPython(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
@@ -793,6 +858,7 @@ class CustomMainWindow(QMainWindow):
             self.on_theme()
         elif idx == 1:
             self.STRCOMM = "# "
+            self.sufftype = ".sh"
             self.__lexer = QsciLexerBash(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
@@ -804,6 +870,7 @@ class CustomMainWindow(QMainWindow):
             self.on_theme()
         elif idx == 2:
             self.STRCOMM = "// "
+            self.sufftype = ".js"
             self.__lexer = QsciLexerJavaScript(self.__editor)
             self.__lexer.setDefaultFont(self.__myFont)
             self.__editor.setLexer(self.__lexer)
@@ -815,17 +882,22 @@ class CustomMainWindow(QMainWindow):
             self.on_theme()
         elif idx == 3:
             self.STRCOMM = "// "
+            self.sufftype = ".txt"
             self.__lexer = textLexer(self.__myFont, self.__editor)
             self.__editor.setLexer(self.__lexer)
             self.__editor.setAutoCompletionCaseSensitivity(True)
             self.ltext()
             # set the theme colours
             self.on_theme()
-        
+    
     #
     def on_read_only(self, btn):
         if self.isModified:
             MyDialog("Info", "Save this document first.", self)
+            return
+        #
+        if not os.access(self.pageName, os.W_OK):
+            MyDialog("Info", "This document cannot be written.", self)
             return
         #
         if not self.__editor.isReadOnly():
@@ -839,7 +911,7 @@ class CustomMainWindow(QMainWindow):
     
     #
     def on_save_as(self):
-        fileName, _ = QFileDialog.getSaveFileName(self, "File Name...", self.pageName or "document.py", "Python (*.py);;All Files (*)")
+        fileName, _ = QFileDialog.getSaveFileName(self, "File Name...", self.pageName or "document{}".format(self.sufftype), "Python (*.py);;All Files (*)")
         if fileName:
             self.pageName = fileName
             self.on_save()
@@ -847,20 +919,25 @@ class CustomMainWindow(QMainWindow):
     #
     def on_save(self):
         if not self.pageName:
-            self.pageName = os.path.join(os.path.expanduser("~"), "document.py")
+            self.pageName = os.path.join(os.path.expanduser("~"), "document{}".format(self.sufftype))
             self.on_save_as()
             return
         #
+        issaved = 0
         try:
             fd = QFile(self.pageName)
             fd.open(QIODevice.WriteOnly)
-            self.__editor.write(fd)
+            ret = self.__editor.write(fd)
+            issaved = ret
             fd.close()
-            #
-            self.isModified = False
-            self.setWindowTitle("{}".format(self.pageName))
         except Exception as E:
             MyDialog("Error", str(E), self)
+        #
+        if issaved:
+            self.isModified = False
+            self.setWindowTitle("{}".format(self.pageName))
+        else:
+            MyDialog("Error", "Problem while saving the file.", self)
     
         
     #
@@ -934,7 +1011,6 @@ class CustomMainWindow(QMainWindow):
     
     # insert a character if a certain one has been typed
     def on_k(self, id):
-        #
         if self.__editor.isReadOnly():
             return
         # 40 ( - 39 ' - 34 " - 91 [ - 123 {
@@ -1112,6 +1188,8 @@ class searchDialog(QDialog):
             while ret:
                 self.editor.replace(self.line_edit_sub.text())
                 ret = self.editor.findNext()
+            # else:
+                # self.editor.cancelFind()
             #
             self.editor.setCursorPosition(pline, pcol)
             #
@@ -1156,7 +1234,7 @@ class searchDialog(QDialog):
 class retDialogBox(QMessageBox):
     def __init__(self, *args):
         super(retDialogBox, self).__init__(args[-1])
-        self.setWindowIcon(QIcon("icons/progam.png"))
+        self.setWindowIcon(QIcon("icons/program.svg"))
         self.setWindowTitle(args[0])
         if args[0] == "Info":
             self.setIcon(QMessageBox.Information)
