@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.7.3 - Development/Testing (full usable)
+V. 0.8 - Development/Testing (full usable)
 
 Requires:
 - python3
@@ -28,6 +28,7 @@ Features:
 - uppercase/lowercase in the contextual menu
 - style colours (almost) fully customizable
 - status bar
+- optional command line argument: -p for python file, -b for bash file, -j for javascript file, -t for text file (file name is optional) 
 - configurable with its config file.
 
 ![My image](https://github.com/frank038/pyeditor/blob/main/image1.png)
