@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-# V 0.8.1
+# V 0.9
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.Qsci import *
 import os
+import re
 from cfgpyeditor import *
 
 
@@ -102,7 +103,15 @@ class MyQsciScintilla(QsciScintilla):
         super(MyQsciScintilla, self).__init__()
         # non so
         self.SendScintilla(QsciScintilla.SCI_SETHSCROLLBAR, 1)
-    
+        # indicators
+        self.indicatorDefine(QsciScintilla.FullBoxIndicator,0, )
+        self.setIndicatorForegroundColor(QColor(SELECTIONBACKGROUNDCOLOR), 0)
+        self.setIndicatorHoverStyle(QsciScintilla.FullBoxIndicator, 0)
+        self.setIndicatorDrawUnder(True, 0)
+        self.SendScintilla(QsciScintilla.SCI_SETINDICATORCURRENT, 0)
+        self.SendScintilla(QsciScintilla.SCI_SETINDICATORVALUE, 0, 0xffff)
+        
+        
     def contextMenuEvent(self, e):
         menu = self.createStandardContextMenu()
         if not self.isReadOnly():
@@ -205,6 +214,10 @@ class CustomMainWindow(QMainWindow):
         self.lang_combo.addItems(["python", "bash", "javascript", "text"])
         self.btn_box0.addWidget(self.lang_combo, stretch=1)
         #
+        self.__btn_close = QPushButton("Close")
+        self.__btn_close.clicked.connect(self.__btn_action_close)
+        self.btn_box0.addWidget(self.__btn_close, stretch=1)
+        #
         self.__btn = QPushButton("Exit")
         self.__btn.clicked.connect(self.__btn_action)
         self.btn_box0.addWidget(self.__btn, stretch=1)
@@ -288,6 +301,10 @@ class CustomMainWindow(QMainWindow):
         self.btn_uncomment.clicked.connect(self.on_btn_uncomment)
         self.btn_box.addWidget(self.btn_uncomment, stretch=1)
         #
+        self.btn_hl = QPushButton("hl")
+        self.btn_hl.setCheckable(True)
+        self.btn_hl.clicked.connect(self.on_btn_hl)
+        self.btn_box.addWidget(self.btn_hl, stretch=0)
         # ----------------------------------------
         # self.__editor = QsciScintilla()
         self.__editor = MyQsciScintilla()
@@ -440,7 +457,31 @@ class CustomMainWindow(QMainWindow):
             self.__editor.setReadOnly(True)
             self.btn_ro.setStyleSheet("QPushButton {color: green;}")
             self.setWindowTitle("{} (read only)".format(self.pageName))
+        # history of searched items
+        self.his_searched = []
         
+    def on_btn_hl(self):
+        if self.btn_hl.isChecked():
+            if self.__editor.hasSelectedText():
+                htext = self.__editor.selectedText()
+                #
+                lines = self.__editor.lines()
+                #
+                for line in range(lines):
+                    ret = [m.start() for m in re.finditer(htext, self.__editor.text(line))]
+                    # 
+                    if ret:
+                        self.__editor.fillIndicatorRange(     
+                        line, # line from
+                        ret[0], # column from
+                        line, # line to
+                        ret[0]+len(htext), # column to
+                        0 )
+        else:
+            lines = self.__editor.lines()
+            for line in range(lines):
+                self.__editor.clearIndicatorRange(line, 0, line, len(self.__editor.text(line)), 0)
+    
     def on_combo_tab(self, idx):
         self.__editor.setIndentationsUseTabs(bool(idx))
         if idx:
@@ -538,6 +579,9 @@ class CustomMainWindow(QMainWindow):
             return
         # 
         if fileName:
+            if not os.path.isfile(fileName):
+                MyDialog("Info", "Not a file.", self)
+                return
             try:
                 fd = QFile(fileName)
                 fd.open(QIODevice.ReadOnly)
@@ -1058,6 +1102,22 @@ class CustomMainWindow(QMainWindow):
             else:
                 self.__editor.zoomIn()
     
+    def __btn_action_close(self):
+        if self.isModified:
+            ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
+            if ret.getValue() == 0:
+                return
+        #
+        else:
+            ret = retDialogBox("Question", "Close this document?", self)
+            if ret.getValue() == 0:
+                return
+        #
+        self.__editor.setText("")
+        self.isModified = False
+        self.his_searched = []
+        self.setWindowTitle("")
+    
     def __btn_action(self):
         if self.isModified:
             ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
@@ -1148,9 +1208,14 @@ class searchDialog(QDialog):
         vbox.setContentsMargins(5,5,5,5)
         self.setLayout(vbox)
         #
-        self.line_edit = QLineEdit()
+        # self.line_edit = QLineEdit()
+        self.line_edit = QComboBox()
+        self.line_edit.setEditable(True)
         if ret_text:
-            self.line_edit.setText(ret_text)
+            # self.line_edit.setText(ret_text)
+            self.parent.his_searched.insert(0, ret_text)
+        self.line_edit.addItems(self.parent.his_searched)
+        #
         vbox.addWidget(self.line_edit)
         #
         self.chk_sens = QCheckBox("Case sensitive")
