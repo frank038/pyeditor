@@ -26,7 +26,7 @@ Features:
 - plain text support (no styling at all)
 - history of opened files
 - zoom (Ctrl+mouse wheel)
-- uppercase/lowercase in the contextual menu
+- uppercase/lowercase/swapcase in the contextual menu
 - style colours (almost) fully customizable
 - status bar
 - optional command line argument: -p for python file, -b for bash file, -j for javascript file, -t for text file (file name is optional) 
