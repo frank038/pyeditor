@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.8.1 - Development/Testing (full usable)
+V. 0.9 - Testing (full usable)
 
 Requires:
 - python3
@@ -11,9 +11,10 @@ Requires:
 Features:
 - word autocompletition
 - braces autocompletition
-- string/word searching
+- string/word searching with history of previous searched words
 - comment/uncomment, also for a group of line of code
 - read only mode
+- highlights the selected words by pressing the 'hl' button, and resets by uncheck it
 - saves its window size
 - file name and path in the titlebar
 - load a file if it is passed as argument
