@@ -7,7 +7,7 @@ STATUSBAR=1
 # font famity to use for the editor
 FONTFAMILY="Monospace"
 # font size for the editor
-FONTSIZE=14
+FONTSIZE=12
 # editor background colour
 EDITORBACKCOLOR="#eeeeee"
 # editor background colour dark theme

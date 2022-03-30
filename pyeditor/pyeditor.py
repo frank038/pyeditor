@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9
+# V 0.9.1
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -1255,10 +1255,13 @@ class searchDialog(QDialog):
         self.exec_()
         
     def on_find(self, ftype):
+        line_edit_text = self.line_edit.currentText()
+        if not line_edit_text in self.parent.his_searched:
+            self.parent.his_searched.insert(0, line_edit_text)
         # substitutions
         if ftype and self.chk.isChecked():
             pline, pcol = self.editor.getCursorPosition()
-            ret = self.editor.findFirst(self.line_edit.text(), False, self.chk_sens.isChecked(), self.chk_word.isChecked(), False, True, 0, 0, False)
+            ret = self.editor.findFirst(line_edit_text, False, self.chk_sens.isChecked(), self.chk_word.isChecked(), False, True, 0, 0, False)
             while ret:
                 self.editor.replace(self.line_edit_sub.text())
                 ret = self.editor.findNext()
@@ -1269,9 +1272,9 @@ class searchDialog(QDialog):
             #
             return
         # searching
-        line_edit_text = self.line_edit.text()
         if line_edit_text == "":
             return
+        #
         if ftype:
             if not self.first_found or not self.isForward:
                 self.isForward = True
