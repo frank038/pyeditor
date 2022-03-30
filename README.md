@@ -8,6 +8,8 @@ Requires:
 - pyqt5
 - qscintilla
 
+This program must be launched by using the bash script pyeditor.sh.
+
 Features:
 - word autocompletition
 - braces autocompletition
