@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.9.1 - Testing (full usable)
+V. 0.9.2 - Testing (full usable)
 
 Requires:
 - python3
@@ -29,6 +29,7 @@ Features:
 - history of opened files
 - zoom (Ctrl+mouse wheel)
 - uppercase/lowercase/swapcase in the contextual menu
+- wordwrapping
 - style colours (almost) fully customizable
 - status bar
 - optional command line argument: -p for python file, -b for bash file, -j for javascript file, -t for text file (file name is optional) 
