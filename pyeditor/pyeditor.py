@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9.1
+# V 0.9.2
 import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -134,6 +134,10 @@ class MyQsciScintilla(QsciScintilla):
             customAction4 = QAction("Eol view/hide")
             customAction4.triggered.connect(self.on_customAction4)
             menu.addAction(customAction4)
+            #
+            customAction5 = QAction("Wordwrap")
+            customAction5.triggered.connect(self.on_customAction5)
+            menu.addAction(customAction5)
         #
         menu.exec_(e.globalPos()+QPoint(5,5))
         
@@ -157,6 +161,12 @@ class MyQsciScintilla(QsciScintilla):
         
     def on_customAction4(self):
         self.setEolVisibility(not self.eolVisibility())
+    
+    def on_customAction5(self):
+        if self.wrapMode():
+            self.setWrapMode(QsciScintilla.WrapNone)
+        else:
+            self.setWrapMode(QsciScintilla.WrapWord)
     
     def keyPressEvent(self, e):
         QsciScintilla.keyPressEvent(self, e)
@@ -404,6 +414,9 @@ class CustomMainWindow(QMainWindow):
         self.on_theme()
         #
         isargument = 0
+        #
+        self.sufftype = ""
+        #
         # set the default editor style from command line
         if len(sys.argv) > 1:
             if sys.argv[1] == "-p":
@@ -444,9 +457,8 @@ class CustomMainWindow(QMainWindow):
                 self.lang_combo.setCurrentIndex(3)
                 self.on_lang_combo(3)
                 self.ltext()
-        self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         #
-        self.sufftype = ""
+        self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         #
         self.show()
         # 
@@ -565,7 +577,7 @@ class CustomMainWindow(QMainWindow):
             if ret.getValue() == 0:
                 return
         #
-        fileName, _ = QFileDialog.getOpenFileName(self, "Select the file", os.path.expanduser('~'), "Python (*.py);;All Files (*)")
+        fileName, _ = QFileDialog.getOpenFileName(self, "Select the file", os.path.expanduser('~'), "All Files (*)")
         if fileName:
             if os.path.exists(fileName) and os.path.isfile(fileName) and os.access(fileName, os.R_OK):
                 self.on_open_f(fileName)
@@ -964,7 +976,7 @@ class CustomMainWindow(QMainWindow):
     
     #
     def on_save_as(self):
-        fileName, _ = QFileDialog.getSaveFileName(self, "File Name...", self.pageName or "document{}".format(self.sufftype), "Python (*.py);;All Files (*)")
+        fileName, _ = QFileDialog.getSaveFileName(self, "File Name...", self.pageName or "document{}".format(self.sufftype), "All Files (*)")
         if fileName:
             self.pageName = fileName
             self.on_save()
