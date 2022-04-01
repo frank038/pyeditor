@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.9.2 - Testing (full usable)
+V. 0.9.3 - Testing (full usable)
 
 Requires:
 - python3
@@ -33,6 +33,7 @@ Features:
 - style colours (almost) fully customizable
 - status bar
 - optional command line argument: -p for python file, -b for bash file, -j for javascript file, -t for text file (file name is optional) 
-- configurable with its config file.
+- configurable with its config file
+- built-in functions: tab/untab, undo/redo (CTRL+z/y), etc.
 
 ![My image](https://github.com/frank038/pyeditor/blob/main/image1.png)
