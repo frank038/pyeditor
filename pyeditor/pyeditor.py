@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-# V 0.9.3
+# V 0.9.4
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint)
 from PyQt5.QtGui import (QColor,QFont,QIcon,QPalette)
-from PyQt5.Qsci import (QsciLexerCustom,QsciScintilla,QsciLexerPython)
+from PyQt5.Qsci import (QsciLexerCustom,QsciScintilla,QsciLexerPython,QsciLexerBash,QsciLexerJavaScript)
 import os
 import re
 from cfgpyeditor import *
