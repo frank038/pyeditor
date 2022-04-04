@@ -8,7 +8,7 @@ from PyQt5.Qsci import (QsciLexerCustom,QsciScintilla,QsciLexerPython,QsciLexerB
 import os
 import re
 from cfgpyeditor import *
- 
+
 
 WINW = 1500
 WINH = 900
@@ -776,7 +776,7 @@ class ftab(QWidget):
             self.__lexer.setColor(QColor(PDECORATOR), 15)
     
     def lbash(self):
-        if not CUS1TOMCOLORS:
+        if not CUSTOMCOLORS:
             return
         if DARKTHEME:
             # Default
@@ -932,7 +932,7 @@ class ftab(QWidget):
             self.__lexer.setFont(self.__myFont, 3)
             self.__lexer.setColor(QColor(JCOMMENT), 3)
             self.__lexer.setFont(self.__myFont, 15)
-            self._1_lexer.setColor(QColor(JCOMMENT), 15)
+            self.__lexer.setColor(QColor(JCOMMENT), 15)
             self.__lexer.setColor(QColor(JCOMMENT), 23)
             self.__lexer.setColor(QColor(JCOMMENT), 24)
             # Number
