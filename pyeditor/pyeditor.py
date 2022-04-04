@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9.4
+# V 0.9.5
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint)
@@ -1131,6 +1131,9 @@ class CustomMainWindow(QMainWindow):
         self.setWindowTitle("")
     
     def __btn_action(self):
+        self.close()
+        
+    def closeEvent(self, event):
         if self.isModified:
             ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
             if ret.getValue() == 0:
@@ -1140,9 +1143,7 @@ class CustomMainWindow(QMainWindow):
             ret = retDialogBox("Question", "Exit?", self)
             if ret.getValue() == 0:
                 return
-        self.close()
-    
-    def closeEvent(self, event):
+        #
         self.on_close()
     
     def on_close(self):
