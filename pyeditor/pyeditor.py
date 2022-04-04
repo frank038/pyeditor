@@ -8,7 +8,7 @@ from PyQt5.Qsci import (QsciLexerCustom,QsciScintilla,QsciLexerPython,QsciLexerB
 import os
 import re
 from cfgpyeditor import *
-
+ 
 
 WINW = 1500
 WINH = 900
