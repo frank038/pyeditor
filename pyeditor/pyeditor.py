@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# V 0.9.5
+# V 0.9.6
 import sys
-from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar) 
+from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar,QTabWidget) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint)
 from PyQt5.QtGui import (QColor,QFont,QIcon,QPalette)
 from PyQt5.Qsci import (QsciLexerCustom,QsciScintilla,QsciLexerPython,QsciLexerBash,QsciLexerJavaScript)
@@ -180,27 +180,20 @@ class MyQsciScintilla(QsciScintilla):
 class CustomMainWindow(QMainWindow):
     def __init__(self):
         super(CustomMainWindow, self).__init__()
+        self.setContentsMargins(0,0,0,0)
         self.setWindowIcon(QIcon("icons/program.svg"))
         self.resize(int(WINW), int(WINH))
-        # has been modified
-        self.isModified = False
+        self.setWindowTitle("pyeditor")
         # Create frame and layout
         # ---------------------------
+        #
         self.__frm = QFrame(self)
+        self.__frm.setContentsMargins(0,0,0,0)
         # self.__frm.setStyleSheet("QWidget { background-color: #ffeaeaea }")
         self.__lyt = QVBoxLayout()
+        self.__lyt.setContentsMargins(2,2,2,2)
         self.__frm.setLayout(self.__lyt)
         self.setCentralWidget(self.__frm)
-        # default font
-        self.__myFont = QFont()
-        self.__myFont.setFamily(FONTFAMILY)
-        self.__myFont.setPointSize(FONTSIZE)
-        #
-        # default bold font
-        self.__myFontB = QFont()
-        self.__myFontB.setFamily(FONTFAMILY)
-        self.__myFontB.setPointSize(FONTSIZE)
-        self.__myFontB.setWeight(QFont.Bold)
         # ------------------
         self.btn_box0 = QHBoxLayout()
         self.__lyt.addLayout(self.btn_box0)
@@ -220,14 +213,6 @@ class CustomMainWindow(QMainWindow):
         self.btn_open.clicked.connect(self.on_open)
         self.btn_box0.addWidget(self.btn_open, stretch=1)
         #
-        self.lang_combo = QComboBox()
-        self.lang_combo.addItems(["python", "bash", "javascript", "text"])
-        self.btn_box0.addWidget(self.lang_combo, stretch=1)
-        #
-        self.__btn_close = QPushButton("Close")
-        self.__btn_close.clicked.connect(self.__btn_action_close)
-        self.btn_box0.addWidget(self.__btn_close, stretch=1)
-        #
         self.__btn = QPushButton("Exit")
         self.__btn.clicked.connect(self.__btn_action)
         self.btn_box0.addWidget(self.__btn, stretch=1)
@@ -246,32 +231,222 @@ class CustomMainWindow(QMainWindow):
             sys.exit()
         #
         self.pageName = ""
-        afilename = None
+        afilename = ""
         if len(sys.argv) > 1:
             if sys.argv[1] in ["-p", "-b", "-j", "-t"]:
                 if len(sys.argv) > 2:
-                    afilename = sys.argv[2]
+                    afilename = os.path.realpath(sys.argv[2])
             else:
-                afilename = sys.argv[1]
-            if afilename:
-                filePath = os.path.realpath(afilename)
-                if os.path.exists(filePath) and os.path.isfile(filePath) and os.access(filePath, os.R_OK):
-                    self.pageName = filePath
-                    self.setWindowTitle("{}".format(self.pageName))
+                afilename = os.path.realpath(sys.argv[1])
+        #
         # for el in self.pageNameHistory[::-1]:
         for el in self.pageNameHistory:
             if el.rstrip("\n") == self.pageName:
                 continue
             self.btn_h_menu.addAction(el.rstrip("\n"))
         #
-        if self.pageName:
+        # if self.pageName:
+        if afilename:
             # populate the menu - opened doc at last position
-            self.btn_h_menu.addAction(self.pageName)
             # save into the list once
-            if self.pageName+"\n" in self.pageNameHistory:
-                self.pageNameHistory.remove(self.pageName+"\n")
-            self.pageNameHistory.append(self.pageName+"\n")
-        # buttons
+            if afilename+"\n" in self.pageNameHistory:
+                self.pageNameHistory.remove(afilename+"\n")
+            else:
+                self.btn_h_menu.addAction(afilename)
+            self.pageNameHistory.append(afilename+"\n")
+        #########
+        ### tabwidget
+        self.frmtab = QTabWidget()
+        self.frmtab.setContentsMargins(0,0,0,0)
+        self.__lyt.addWidget(self.frmtab)
+        self.frmtab.setTabPosition(3)
+        self.frmtab.setTabBarAutoHide(False)
+        # self.frmtab.setTabsClosable(True)
+        self.frmtab.setMovable(True)
+        # self.frmtab.tabCloseRequested.connect(self.on_tab_close)
+        #
+        # set the default editor style from command line
+        self.isargument = 0
+        if len(sys.argv) > 1:
+            if sys.argv[1] == "-p":
+                self.isargument = 1
+            elif sys.argv[1] == "-b":
+                self.isargument = 2
+            elif sys.argv[1] == "-j":
+                self.isargument = 3
+            elif sys.argv[1] == "-t":
+                self.isargument = 4
+        # or from config file
+        if self.isargument == 0:
+            if EDITORTYPE == "python":
+                self.isargument = 1
+            elif EDITORTYPE == "bash":
+                self.isargument = 2
+            elif EDITORTYPE == "javascript":
+                self.isargument = 3
+            elif EDITORTYPE == "text":
+                self.isargument = 4
+        # 
+        pop_tab = ftab(afilename, self.isargument, self)
+        self.frmtab.addTab(pop_tab, os.path.basename(afilename) or "Unknown")
+        self.frmtab.setTabToolTip(0, afilename or "Unknown")
+        #
+        self.show()
+        
+    # open a file from the history
+    def on_h_menu(self, action):
+        fileName = action.text()
+        #
+        is_found = 0
+        for tt in range(self.frmtab.count()):
+            if self.frmtab.tabText(tt) == os.path.basename(fileName.strip("\n")):
+                is_found = 1
+                break
+        if is_found:
+            MyDialog("Info", "File already opened.", self)
+        else:
+            self.on_open_f(fileName.strip("\n"))
+        
+    def on_new(self):
+        ret = retDialogBox("Question", "Create a new document?", self)
+        if ret.getValue() == 0:
+            return
+        #
+        fileName = ""
+        pop_tab = ftab(fileName, self.isargument, self)
+        self.frmtab.addTab(pop_tab, os.path.basename(fileName) or "Unknown")
+        self.frmtab.setTabToolTip(0, fileName or "Unknown")
+        self.frmtab.setCurrentIndex(self.frmtab.count()-1)
+    
+    def on_open(self):
+        ret = retDialogBox("Question", "Open a new document?", self)
+        if ret.getValue() == 0:
+            return
+        #
+        fileName, _ = QFileDialog.getOpenFileName(self, "Select the file", os.path.expanduser('~'), "All Files (*)")
+        if fileName:
+            if os.path.exists(fileName) and os.path.isfile(fileName) and os.access(fileName, os.R_OK):
+                self.on_open_f(fileName)
+            else:
+                MyDialog("Error", "Problem with the file.\nIt doesn't exist or it isn't readable.", self)
+        
+    # related to on_open
+    def on_open_f(self, fileName):
+        if fileName:
+            if not os.path.isfile(fileName):
+                MyDialog("Info", "Not a file.", self)
+                return
+            #
+            pop_tab = ftab(fileName, self.isargument, self)
+            self.frmtab.addTab(pop_tab, os.path.basename(fileName) or "Unknown")
+            self.frmtab.setTabToolTip(0, fileName or "Unknown")
+            self.frmtab.setCurrentIndex(self.frmtab.count()-1)
+            #
+            if not fileName+"\n" in self.pageNameHistory:
+                self.btn_h_menu.addAction(fileName)
+                self.pageNameHistory.append(fileName+"\n")
+    
+    def __btn_action(self):
+        self.close()
+    
+    def closeEvent(self, event):
+        isModified = False
+        #
+        for tt in range(self.frmtab.count()):
+            if self.frmtab.widget(tt).isModified:
+                isModified = True
+                break
+        #
+        if isModified:
+            ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
+            if ret.getValue() == 0:
+                event.ignore()
+                return
+        #
+        else:
+            ret = retDialogBox("Question", "Exit?", self)
+            if ret.getValue() == 0:
+                event.ignore()
+                return
+        # 
+        self.on_close()
+        
+    def on_close(self):
+        # save the history
+        try:
+            with open("pyeditorh.txt", "w") as ff:
+                for el in self.pageNameHistory[-HISTORYLIMIT:]:
+                    ff.write(el)
+        except Exception as E:
+            MyDialog("Error", "Cannot save the file history.", self)
+        #
+        new_w = self.size().width()
+        new_h = self.size().height()
+        if new_w != int(WINW) or new_h != int(WINH):
+            # WINW = width
+            # WINH = height
+            # WINM = maximized
+            isMaximized = self.isMaximized()
+            # close without update the file
+            if isMaximized == True:
+                qApp.quit()
+                return
+            #
+            try:
+                ifile = open("pyeditor.cfg", "w")
+                ifile.write("{};{};False".format(new_w, new_h))
+                ifile.close()
+            except Exception as E:
+                MyDialog("Error", str(E), self)
+        qApp.quit()
+    
+    # #
+    # def on_tab_close(self, idx):
+        # if self.frmtab.widget(idx).isModified:
+            # MyDialog("Info", "Save the file first.", self)
+            # return
+        # else:
+            # if self.frmtab.count() > 1:
+                # self.frmtab.removeTab(idx)
+                # return
+            # self.on_open_f("")
+    
+    
+# class ftab(QFrame):
+class ftab(QWidget):
+    def __init__(self, afilename, editortype, parent):
+        super().__init__()
+        self.parent = parent
+        self.setContentsMargins(1,1,1,1)
+        self.isargument = editortype
+        self.isModified = False
+        # default font
+        self.__myFont = QFont()
+        self.__myFont.setFamily(FONTFAMILY)
+        self.__myFont.setPointSize(FONTSIZE)
+        #
+        # default bold font
+        self.__myFontB = QFont()
+        self.__myFontB.setFamily(FONTFAMILY)
+        self.__myFontB.setPointSize(FONTSIZE)
+        self.__myFontB.setWeight(QFont.Bold)
+        #
+        self.pageName = None
+        if afilename:
+            filePath = os.path.realpath(afilename)
+            if os.path.exists(filePath) and os.path.isfile(filePath) and os.access(filePath, os.R_OK):
+                self.pageName = filePath
+        #
+        self.pop_tab(afilename)
+    
+    def __is_modified(self):
+        return self.isModified
+    
+    def pop_tab(self, afilename):
+        self.__lyt = QVBoxLayout()
+        self.__lyt.setContentsMargins(1,1,1,1)
+        self.setLayout(self.__lyt)
+        # document buttons
         self.btn_box = QHBoxLayout()
         self.__lyt.addLayout(self.btn_box)
         #
@@ -283,14 +458,19 @@ class CustomMainWindow(QMainWindow):
         self.combo_space.addItems(["2","3","4","5","6","7","8"])
         self.btn_box.addWidget(self.combo_space)
         #
+        self.lang_combo = QComboBox()
+        self.lang_combo.addItems(["p", "b", "j", "t"])
+        self.btn_box.addWidget(self.lang_combo)
+        #
         # self.combo_eol = QComboBox()
         # self.combo_eol.addItems(["L","W"])
         # self.btn_box.addWidget(self.combo_eol)
         #
-        self.btn_ro = QPushButton("Read Only")
+        self.btn_ro = QPushButton("RO")
         self.btn_ro.clicked.connect(self.on_read_only)
         self.btn_box.addWidget(self.btn_ro, stretch=1)
-        #
+        #                    print("1201", el)
+
         self.btn_save = QPushButton("Save")
         self.btn_save.clicked.connect(self.on_save)
         self.btn_box.addWidget(self.btn_save, stretch=1)
@@ -299,15 +479,19 @@ class CustomMainWindow(QMainWindow):
         self.btn_save_as.clicked.connect(self.on_save_as)
         self.btn_box.addWidget(self.btn_save_as, stretch=1)
         #
+        self.__btn_close = QPushButton("Close")
+        self.__btn_close.clicked.connect(self.__btn_action_close)
+        self.btn_box.addWidget(self.__btn_close, stretch=1)
+        #
         self.btn_search = QPushButton("Search")
         self.btn_search.clicked.connect(self.on_search)
         self.btn_box.addWidget(self.btn_search, stretch=1)
         #
-        self.btn_comment = QPushButton("Comment")
+        self.btn_comment = QPushButton("Comm")
         self.btn_comment.clicked.connect(self.on_btn_comment)
         self.btn_box.addWidget(self.btn_comment, stretch=1)
         #
-        self.btn_uncomment = QPushButton("Uncomment")
+        self.btn_uncomment = QPushButton("Uncomm")
         self.btn_uncomment.clicked.connect(self.on_btn_uncomment)
         self.btn_box.addWidget(self.btn_uncomment, stretch=1)
         #
@@ -333,7 +517,7 @@ class CustomMainWindow(QMainWindow):
         #
         self.__editor.setLexer(None)            # We install lexer later
         self.__editor.setUtf8(True)             # Set encoding to UTF-8
-        # Brace matching
+        # Brace matchingself.frmtab.
         self.__editor.setBraceMatching(QsciScintilla.SloppyBraceMatch)
         #####
         self.__editor.setAutoCompletionThreshold(AUTOCOMPLETITION_CHARS)
@@ -344,7 +528,6 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setAutoCompletionSource(QsciScintilla.AcsDocument)
         if USEWORDAUTOCOMLETION:
             self.__editor.setAutoCompletionWordSeparators(["."])
-        
         # # End-of-line mode
         # # --------------------
         # if ENDOFLINE == "unix":
@@ -354,7 +537,6 @@ class CustomMainWindow(QMainWindow):
             # self.combo_eol.setCurrentIndex(1)
         #
         self.__editor.setEolVisibility(False)
-        
         # Indentation
         # ---------------
         self.__editor.setIndentationsUseTabs(USETAB)
@@ -368,18 +550,15 @@ class CustomMainWindow(QMainWindow):
         self.__editor.setTabIndents(True)
         self.__editor.setAutoIndent(True)
         self.__editor.setBackspaceUnindents(True)
-        
         # a character has been typed
-        # self.__editor.SCN_CHARADDED.connect(self.on_k)
+        # self.__editor.SCN_CHARADDED.connect(filenotfoundself.on_k)
         self.__editor.keyPressed.connect(self.on_k)
-        
         # the text has been modified
         self.__editor.modificationChanged.connect(self.on_text_changed)
         # Caret
         # ---------
         self.__editor.setCaretLineVisible(True)
         self.__editor.setCaretWidth(CARETWIDTH)
-        
         # Margins
         # -----------
         # Margin 0 = Line nr margin
@@ -392,19 +571,36 @@ class CustomMainWindow(QMainWindow):
         self.__lexer.setDefaultFont(self.__myFont)
         self.__editor.setLexer(self.__lexer)
         #
-        
         # font
         self.__lexer.setFont(QFont(FONTFAMILY, FONTSIZE))
         ##################
         # 
-        
         # ! Add editor to layout !
         # -------------------------
         self.__lyt.addWidget(self.__editor, stretch=1)
         # 
-        
         self.__editor.setContextMenuPolicy(Qt.DefaultContextMenu)
-        
+        #
+        # python
+        if self.isargument == 1:
+            self.lang_combo.setCurrentIndex(0)
+            self.on_lang_combo(0)
+            self.lpython()
+        # bash
+        elif self.isargument == 2:
+            self.lang_combo.setCurrentIndex(1)
+            self.on_lang_combo(1)
+            self.lbash()
+        # javascript
+        elif self.isargument == 3:
+            self.lang_combo.setCurrentIndex(2)
+            self.on_lang_combo(2)
+            self.ljavascript()
+        # text
+        elif self.isargument == 4:
+            self.lang_combo.setCurrentIndex(3)
+            self.on_lang_combo(3)
+            self.ltext()
         #
         if STATUSBAR:
             self.statusBar = QStatusBar()
@@ -413,50 +609,7 @@ class CustomMainWindow(QMainWindow):
         # set the theme colours
         self.on_theme()
         #
-        isargument = 0
-        #
         self.sufftype = ""
-        #
-        # set the default editor style from command line
-        if len(sys.argv) > 1:
-            if sys.argv[1] == "-p":
-                isargument = 1
-                self.lang_combo.setCurrentIndex(0)
-                self.on_lang_combo(0)
-                self.lpython()
-            elif sys.argv[1] == "-b":
-                isargument = 1
-                self.lang_combo.setCurrentIndex(1)
-                self.on_lang_combo(1)
-                self.lbash()
-            elif sys.argv[1] == "-j":
-                isargument = 1
-                self.lang_combo.setCurrentIndex(2)
-                self.on_lang_combo(2)
-                self.ljavascript()
-            elif sys.argv[1] == "-t":
-                isargument = 1
-                self.lang_combo.setCurrentIndex(3)
-                self.on_lang_combo(3)
-                self.ltext()
-        # or from config file
-        if isargument == 0:
-            if EDITORTYPE == "python":
-                self.lang_combo.setCurrentIndex(0)
-                self.on_lang_combo(0)
-                self.lpython()
-            elif EDITORTYPE == "bash":
-                self.lang_combo.setCurrentIndex(1)
-                self.on_lang_combo(1)
-                self.lbash()
-            elif EDITORTYPE == "javascript":
-                self.lang_combo.setCurrentIndex(2)
-                self.on_lang_combo(2)
-                self.ljavascript()
-            elif EDITORTYPE == "text":
-                self.lang_combo.setCurrentIndex(3)
-                self.on_lang_combo(3)
-                self.ltext()
         #
         self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         #
@@ -468,9 +621,6 @@ class CustomMainWindow(QMainWindow):
         if self.pageName and not os.access(self.pageName, os.W_OK):
             self.__editor.setReadOnly(True)
             self.btn_ro.setStyleSheet("QPushButton {color: green;}")
-            self.setWindowTitle("{} (read only)".format(self.pageName))
-        # history of searched items
-        self.his_searched = []
         
     def on_btn_hl(self):
         if self.btn_hl.isChecked():
@@ -540,74 +690,8 @@ class CustomMainWindow(QMainWindow):
     
     def on_text_changed(self):
         self.isModified = True
-        self.setWindowTitle("{} (modified)".format(self.pageName))
-    
-    # open a file from the history
-    def on_h_menu(self, action):
-        fileName = action.text()
-        self.on_open_f(fileName)
-    
-    #
-    def on_new(self):
-        if self.isModified:
-            # MyDialog("Info", "Save this document first.", self)
-            # return
-            ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
-            if ret.getValue() == 0:
-                return
-        else:
-            ret = retDialogBox("Question", "Create a new document?", self)
-            if ret.getValue() == 0:
-                return
-        self.__editor.setText("")
-        self.setWindowTitle("")
-        self.isModified = False
-        self.pageName = ""
-        
-    #
-    def on_open(self):
-        if self.isModified:
-            # MyDialog("Info", "Save this document first.", self)
-            # return
-            ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
-            if ret.getValue() == 0:
-                return
-        else:
-            ret = retDialogBox("Question", "Open a new document?", self)
-            if ret.getValue() == 0:
-                return
-        #
-        fileName, _ = QFileDialog.getOpenFileName(self, "Select the file", os.path.expanduser('~'), "All Files (*)")
-        if fileName:
-            if os.path.exists(fileName) and os.path.isfile(fileName) and os.access(fileName, os.R_OK):
-                self.on_open_f(fileName)
-            else:
-                MyDialog("Error", "Problem with the file.\nIt doesn't exist or it isn't readable.", self)
-        
-    # related to on_open
-    def on_open_f(self, fileName):
-        if fileName == self.pageName:
-            MyDialog("Info", "It is the current document.", self)
-            return
-        # 
-        if fileName:
-            if not os.path.isfile(fileName):
-                MyDialog("Info", "Not a file.", self)
-                return
-            try:
-                fd = QFile(fileName)
-                fd.open(QIODevice.ReadOnly)
-                self.__editor.setText("")
-                self.__editor.read(fd)
-                fd.close()
-                self.setWindowTitle(fileName)
-                self.pageName = fileName
-                if not self.pageName+"\n" in self.pageNameHistory:
-                    self.btn_h_menu.addAction(self.pageName)
-                    self.pageNameHistory.append(self.pageName+"\n")
-                self.isModified = False
-            except Exception as E:
-                MyDialog("Error", str(E), self)
+        curr_idx = self.parent.frmtab.currentIndex()
+        self.parent.frmtab.tabBar().setTabTextColor(curr_idx, Qt.red)
     
     def lpython(self):
         if not CUSTOMCOLORS:
@@ -626,7 +710,7 @@ class CustomMainWindow(QMainWindow):
             # Single-quoted string
             self.__lexer.setFont(self.__myFont, 4)
             self.__lexer.setColor(QColor(PDSINGELQ), 4)
-            # Keyword
+            # Keyw1ord
             self.__lexer.setFont(self.__myFontB, 5)
             self.__lexer.setColor(QColor(PDKEYW), 5)
             # Triple single-quoted string
@@ -692,7 +776,7 @@ class CustomMainWindow(QMainWindow):
             self.__lexer.setColor(QColor(PDECORATOR), 15)
     
     def lbash(self):
-        if not CUSTOMCOLORS:
+        if not CUS1TOMCOLORS:
             return
         if DARKTHEME:
             # Default
@@ -771,7 +855,7 @@ class CustomMainWindow(QMainWindow):
             # C++ comment
             # JavaDoc style C comment
             # JavaDoc style pre-processor comment
-            # JavaDoc style C++ comment
+            # JavaDoc style C++ co    mment
             # Pre-processor C comment
             # JavaDoc style pre-processor comment
             self.__lexer.setFont(self.__myFont, 1)
@@ -848,7 +932,7 @@ class CustomMainWindow(QMainWindow):
             self.__lexer.setFont(self.__myFont, 3)
             self.__lexer.setColor(QColor(JCOMMENT), 3)
             self.__lexer.setFont(self.__myFont, 15)
-            self.__lexer.setColor(QColor(JCOMMENT), 15)
+            self._1_lexer.setColor(QColor(JCOMMENT), 15)
             self.__lexer.setColor(QColor(JCOMMENT), 23)
             self.__lexer.setColor(QColor(JCOMMENT), 24)
             # Number
@@ -961,18 +1045,17 @@ class CustomMainWindow(QMainWindow):
             MyDialog("Info", "Save this document first.", self)
             return
         #
-        if not os.access(self.pageName, os.W_OK):
-            MyDialog("Info", "This document cannot be written.", self)
-            return
+        if self.pageName:
+            if not os.access(self.pageName, os.W_OK):
+                MyDialog("Info", "This document cannot be written.", self)
+                return
         #
         if not self.__editor.isReadOnly():
             self.__editor.setReadOnly(True)
             self.sender().setStyleSheet("QPushButton {color: green;}")
-            self.setWindowTitle("{} (read only)".format(self.pageName))
         else:
             self.__editor.setReadOnly(False)
             self.sender().setStyleSheet("")
-            self.setWindowTitle("{}".format(self.pageName))
     
     #
     def on_save_as(self):
@@ -1000,10 +1083,17 @@ class CustomMainWindow(QMainWindow):
         #
         if issaved:
             self.isModified = False
-            self.setWindowTitle("{}".format(self.pageName))
+            #
+            if not self.pageName+"\n" in self.parent.pageNameHistory:
+                self.parent.btn_h_menu.addAction(self.pageName+"\n")
+                self.parent.pageNameHistory.append(self.pageName+"\n")
+            curr_idx = self.parent.frmtab.currentIndex()
+            #
+            self.parent.frmtab.setTabText(curr_idx, os.path.basename(self.pageName))
+            curr_idx = self.parent.frmtab.currentIndex()
+            self.parent.frmtab.tabBar().setTabTextColor(curr_idx, QColor(QPalette.Text))
         else:
             MyDialog("Error", "Problem while saving the file.", self)
-    
         
     #
     def on_search(self):
@@ -1105,7 +1195,8 @@ class CustomMainWindow(QMainWindow):
             if id == '':
                 return
             self.isModified = True
-            self.setWindowTitle("{} (modified)".format(self.pageName))
+            curr_idx = self.parent.frmtab.currentIndex()
+            self.parent.frmtab.tabBar().setTabTextColor(curr_idx, Qt.red)
     
     def wheelEvent(self, e):
         if e.modifiers() & Qt.CTRL:
@@ -1125,55 +1216,16 @@ class CustomMainWindow(QMainWindow):
             if ret.getValue() == 0:
                 return
         #
-        self.__editor.setText("")
-        self.isModified = False
-        self.his_searched = []
-        self.setWindowTitle("")
-    
-    def __btn_action(self):
-        self.close()
-        
-    def closeEvent(self, event):
-        if self.isModified:
-            ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
-            if ret.getValue() == 0:
-                return
-        #
+        if self.parent.frmtab.count() > 1:
+            curr_idx = self.parent.frmtab.currentIndex()
+            self.parent.frmtab.removeTab(curr_idx)
+            return
         else:
-            ret = retDialogBox("Question", "Exit?", self)
-            if ret.getValue() == 0:
-                return
-        #
-        self.on_close()
-    
-    def on_close(self):
-        # save the history
-        try:
-            with open("pyeditorh.txt", "w") as ff:
-                for el in self.pageNameHistory[-HISTORYLIMIT:]:
-                    ff.write(el)
-        except Exception as E:
-            MyDialog("Error", "Cannot save the file history.", self)
-        #
-        new_w = self.size().width()
-        new_h = self.size().height()
-        if new_w != int(WINW) or new_h != int(WINH):
-            # WINW = width
-            # WINH = height
-            # WINM = maximized
-            isMaximized = self.isMaximized()
-            # close without update the file
-            if isMaximized == True:
-                qApp.quit()
-                return
-            #
-            try:
-                ifile = open("pyeditor.cfg", "w")
-                ifile.write("{};{};False".format(new_w, new_h))
-                ifile.close()
-            except Exception as E:
-                MyDialog("Error", str(E), self)
-        qApp.quit()
+            self.__editor.setText("")
+            self.isModified = False
+            curr_idx = self.parent.frmtab.currentIndex()
+            self.parent.frmtab.setTabText(curr_idx, "Unknown")
+            self.parent.frmtab.tabBar().setTabTextColor(curr_idx, QColor(QPalette.Text))
     
 
 # simple dialog message
