@@ -437,6 +437,10 @@ class ftab(QWidget):
             if os.path.exists(filePath) and os.path.isfile(filePath) and os.access(filePath, os.R_OK):
                 self.pageName = filePath
         #
+        self.his_searched = []
+        #
+        self.sufftype = ""
+        #
         self.pop_tab(afilename)
     
     def __is_modified(self):
@@ -608,8 +612,6 @@ class ftab(QWidget):
             self.statusBar.showMessage("line: {0}/{1} column: {2}".format("-", "-", "-"))
         # set the theme colours
         self.on_theme()
-        #
-        self.sufftype = ""
         #
         self.lang_combo.currentIndexChanged.connect(self.on_lang_combo)
         #
@@ -1059,7 +1061,7 @@ class ftab(QWidget):
     
     #
     def on_save_as(self):
-        fileName, _ = QFileDialog.getSaveFileName(self, "File Name...", self.pageName or "document{}".format(self.sufftype), "All Files (*)")
+        fileName, _ = QFileDialog.getSaveFileName(self, "File Name...", os.path.join(os.path.expanduser("~"), self.pageName or "document{}".format(self.sufftype)), "All Files (*)")
         if fileName:
             self.pageName = fileName
             self.on_save()
@@ -1088,8 +1090,10 @@ class ftab(QWidget):
                 self.parent.btn_h_menu.addAction(self.pageName+"\n")
                 self.parent.pageNameHistory.append(self.pageName+"\n")
             curr_idx = self.parent.frmtab.currentIndex()
-            #
+            # # the file is only saved with a new name - it will not used
+            # if not self.pageName:
             self.parent.frmtab.setTabText(curr_idx, os.path.basename(self.pageName))
+            self.parent.frmtab.setTabToolTip(curr_idx, self.pageName)
             curr_idx = self.parent.frmtab.currentIndex()
             self.parent.frmtab.tabBar().setTabTextColor(curr_idx, QColor(QPalette.Text))
         else:
@@ -1276,8 +1280,10 @@ class searchDialog(QDialog):
         # self.line_edit = QLineEdit()
         self.line_edit = QComboBox()
         self.line_edit.setEditable(True)
-        if ret_text:
+        if ret_text and len(ret_text) < 35:
             # self.line_edit.setText(ret_text)
+            if ret_text in self.parent.his_searched:
+                self.parent.his_searched.remove(ret_text)
             self.parent.his_searched.insert(0, ret_text)
         self.line_edit.addItems(self.parent.his_searched)
         #
