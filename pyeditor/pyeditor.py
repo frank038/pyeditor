@@ -101,7 +101,6 @@ class MyQsciScintilla(QsciScintilla):
     keyPressed = pyqtSignal(str)
     def __init__(self):
         super(MyQsciScintilla, self).__init__()
-        # non so
         self.SendScintilla(QsciScintilla.SCI_SETHSCROLLBAR, 1)
         # indicators
         self.indicatorDefine(QsciScintilla.FullBoxIndicator,0, )
@@ -412,7 +411,6 @@ class CustomMainWindow(QMainWindow):
             # self.on_open_f("")
     
     
-# class ftab(QFrame):
 class ftab(QWidget):
     def __init__(self, afilename, editortype, parent):
         super().__init__()
