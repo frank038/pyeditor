@@ -1,7 +1,7 @@
 # type of editor - one from: python, bash, javascript, text
 EDITORTYPE="python"
 # gui style
-GUISTYLE="Fusion"
+GUISTYLE=""
 # add the status bar: 0 no - 1 yes
 STATUSBAR=1
 # font famity to use for the editor

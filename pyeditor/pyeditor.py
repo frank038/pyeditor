@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9.6
+# V 0.9.7
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar,QTabWidget) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint)
@@ -10,8 +10,8 @@ import re
 from cfgpyeditor import *
 
 
-WINW = 1500
-WINH = 900
+WINW = 1200
+WINH = 600
 
 class firstMessage(QWidget):
     def __init__(self, *args):
@@ -263,6 +263,7 @@ class CustomMainWindow(QMainWindow):
         # self.frmtab.setTabsClosable(True)
         self.frmtab.setMovable(True)
         # self.frmtab.tabCloseRequested.connect(self.on_tab_close)
+        self.frmtab.currentChanged.connect(self.on_tab_changed)
         #
         # set the default editor style from command line
         self.isargument = 0
@@ -289,9 +290,14 @@ class CustomMainWindow(QMainWindow):
         pop_tab = ftab(afilename, self.isargument, self)
         self.frmtab.addTab(pop_tab, os.path.basename(afilename) or "Unknown")
         self.frmtab.setTabToolTip(0, afilename or "Unknown")
+        self.setWindowTitle("pyeditor - {}".format(os.path.basename(afilename) or "Unknown"))
         #
         self.show()
         
+    def on_tab_changed(self, idx):
+        # self.sender().tabText(idx)
+        self.setWindowTitle("pyeditor - {}".format(self.frmtab.tabText(idx)))
+    
     # open a file from the history
     def on_h_menu(self, action):
         fileName = action.text()
@@ -471,8 +477,7 @@ class ftab(QWidget):
         self.btn_ro = QPushButton("RO")
         self.btn_ro.clicked.connect(self.on_read_only)
         self.btn_box.addWidget(self.btn_ro, stretch=1)
-        #                    print("1201", el)
-
+        #  
         self.btn_save = QPushButton("Save")
         self.btn_save.clicked.connect(self.on_save)
         self.btn_box.addWidget(self.btn_save, stretch=1)
@@ -1094,6 +1099,7 @@ class ftab(QWidget):
             self.parent.frmtab.setTabToolTip(curr_idx, self.pageName)
             curr_idx = self.parent.frmtab.currentIndex()
             self.parent.frmtab.tabBar().setTabTextColor(curr_idx, QColor(QPalette.Text))
+            # self.parent.frmtab.tabBar().setTabTextColor(curr_idx, Qt.green)
         else:
             MyDialog("Error", "Problem while saving the file.", self)
         
@@ -1268,7 +1274,7 @@ class searchDialog(QDialog):
         self.editor = editor
         self.setWindowIcon(QIcon("icons/program.svg"))
         self.setWindowTitle("Search...")
-        self.setWindowModality(Qt.ApplicationModal)
+        # self.setWindowModality(Qt.ApplicationModal)
         self.resize(DIALOGWIDTH, 300)
         #
         vbox = QBoxLayout(QBoxLayout.TopToBottom)
@@ -1321,7 +1327,8 @@ class searchDialog(QDialog):
         #
         self.Value = 0
         #
-        self.exec_()
+        # self.exec_()
+        self.show()
         
     def on_find(self, ftype):
         line_edit_text = self.line_edit.currentText()
