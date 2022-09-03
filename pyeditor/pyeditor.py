@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9.7
+# V 0.9.8
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar,QTabWidget) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint)
@@ -442,6 +442,8 @@ class ftab(QWidget):
                 self.pageName = filePath
         #
         self.his_searched = []
+        #
+        self.search_is_open = 0
         #
         self.sufftype = ""
         #
@@ -1105,6 +1107,8 @@ class ftab(QWidget):
         
     #
     def on_search(self):
+        if self.search_is_open:
+            return
         ret_text = self.__editor.selectedText()
         ret = searchDialog(self, ret_text, self.__editor)
     
@@ -1234,7 +1238,8 @@ class ftab(QWidget):
             curr_idx = self.parent.frmtab.currentIndex()
             self.parent.frmtab.setTabText(curr_idx, "Unknown")
             self.parent.frmtab.tabBar().setTabTextColor(curr_idx, QColor(QPalette.Text))
-    
+            self.parent.setWindowTitle("pyeditor - Unknown")
+            self.statusBar.showMessage("line: -/- column: -")
 
 # simple dialog message
 # type - message - parent
@@ -1272,6 +1277,8 @@ class searchDialog(QDialog):
         super(searchDialog, self).__init__(parent)
         self.parent = parent
         self.editor = editor
+        # this dialog is open
+        self.parent.search_is_open = 1
         self.setWindowIcon(QIcon("icons/program.svg"))
         self.setWindowTitle("Search...")
         # self.setWindowModality(Qt.ApplicationModal)
@@ -1305,6 +1312,7 @@ class searchDialog(QDialog):
         #
         self.line_edit_sub = QLineEdit()
         self.line_edit_sub.setEnabled(False)
+        self.line_edit.currentTextChanged.connect(self.le_cur_changed)
         vbox.addWidget(self.line_edit_sub)
         ### button box
         hbox = QBoxLayout(QBoxLayout.LeftToRight)
@@ -1319,7 +1327,7 @@ class searchDialog(QDialog):
         hbox.addWidget(self.button2)
         #
         button3 = QPushButton("Close")
-        button3.clicked.connect(self.close)
+        button3.clicked.connect(self.close_)
         hbox.addWidget(button3)
         #
         self.first_found = False
@@ -1330,8 +1338,14 @@ class searchDialog(QDialog):
         # self.exec_()
         self.show()
         
+    def le_cur_changed(self, new_text):
+        self.first_found = False
+    
     def on_find(self, ftype):
         line_edit_text = self.line_edit.currentText()
+        if line_edit_text == "":
+            return
+        #
         if not line_edit_text in self.parent.his_searched:
             self.parent.his_searched.insert(0, line_edit_text)
         # substitutions
@@ -1347,11 +1361,14 @@ class searchDialog(QDialog):
             self.editor.setCursorPosition(pline, pcol)
             #
             return
-        # searching
-        if line_edit_text == "":
-            return
+        #
+        # if ftype == 1 and self.isForward == False: 
+            # self.first_found = False
+        # elif ftype == 0 and self.isForward == True:
+            # self.first_found = False
         #
         if ftype:
+            # if not self.first_found:
             if not self.first_found or not self.isForward:
                 self.isForward = True
                 ret = self.editor.findFirst(line_edit_text, False, self.chk_sens.isChecked(), self.chk_word.isChecked(), False, True)
@@ -1359,6 +1376,7 @@ class searchDialog(QDialog):
             else:
                 self.editor.findNext()
         else:
+            # if not self.first_found:
             if not self.first_found or self.isForward:
                 self.isForward = False
                 ret = self.editor.findFirst(line_edit_text, False, self.chk_sens.isChecked(), self.chk_word.isChecked(), False, False)
@@ -1381,6 +1399,10 @@ class searchDialog(QDialog):
     
     def getValue(self):
         return self.Value
+    
+    def close_(self):
+        self.parent.search_is_open = 0
+        self.close()
 
 
 # dialog - return of the choise yes or no
