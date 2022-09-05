@@ -1,7 +1,7 @@
 # pyeditor
 A python IDE with some features.
 
-V. 0.9.8
+V. 0.9.9
 
 Requires:
 - python3
