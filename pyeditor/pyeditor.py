@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9.8
+# V 0.9.9
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar,QTabWidget) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint)
@@ -290,6 +290,9 @@ class CustomMainWindow(QMainWindow):
         pop_tab = ftab(afilename, self.isargument, self)
         self.frmtab.addTab(pop_tab, os.path.basename(afilename) or "Unknown")
         self.frmtab.setTabToolTip(0, afilename or "Unknown")
+        if not os.access(afilename, os.W_OK):
+            self.frmtab.tabBar().setTabTextColor(self.frmtab.count()-1, QColor("#009900"))
+        #
         self.setWindowTitle("pyeditor - {}".format(os.path.basename(afilename) or "Unknown"))
         #
         self.show()
@@ -346,6 +349,9 @@ class CustomMainWindow(QMainWindow):
             self.frmtab.addTab(pop_tab, os.path.basename(fileName) or "Unknown")
             self.frmtab.setTabToolTip(0, fileName or "Unknown")
             self.frmtab.setCurrentIndex(self.frmtab.count()-1)
+            #
+            if not os.access(fileName, os.W_OK):
+                self.frmtab.tabBar().setTabTextColor(self.frmtab.count()-1, QColor("#009900"))
             #
             if not fileName+"\n" in self.pageNameHistory:
                 self.btn_h_menu.addAction(fileName)
@@ -627,7 +633,16 @@ class ftab(QWidget):
         # file is not writable
         if self.pageName and not os.access(self.pageName, os.W_OK):
             self.__editor.setReadOnly(True)
-            self.btn_ro.setStyleSheet("QPushButton {color: green;}")
+            self.btn_ro.setStyleSheet("QPushButton {color: #009900;}")
+            #
+            self.combo_tab.setEnabled(False)
+            self.combo_space.setEnabled(False)
+            self.lang_combo.setEnabled(False)
+            self.btn_save.setEnabled(False)
+            self.btn_save_as.setEnabled(False)
+            self.btn_comment.setEnabled(False)
+            self.btn_uncomment.setEnabled(False)
+            self.btn_hl.setEnabled(False)
         
     def on_btn_hl(self):
         if self.btn_hl.isChecked():
@@ -1059,10 +1074,30 @@ class ftab(QWidget):
         #
         if not self.__editor.isReadOnly():
             self.__editor.setReadOnly(True)
-            self.sender().setStyleSheet("QPushButton {color: green;}")
+            self.sender().setStyleSheet("QPushButton {color: #009900;}")
+            curr_idx = self.parent.frmtab.currentIndex()
+            self.parent.frmtab.tabBar().setTabTextColor(curr_idx, QColor("#009900"))
+            self.combo_tab.setEnabled(False)
+            self.combo_space.setEnabled(False)
+            self.lang_combo.setEnabled(False)
+            self.btn_save.setEnabled(False)
+            self.btn_save_as.setEnabled(False)
+            self.btn_comment.setEnabled(False)
+            self.btn_uncomment.setEnabled(False)
+            self.btn_hl.setEnabled(False)
         else:
             self.__editor.setReadOnly(False)
             self.sender().setStyleSheet("")
+            curr_idx = self.parent.frmtab.currentIndex()
+            self.parent.frmtab.tabBar().setTabTextColor(curr_idx, QColor(QPalette.Text))
+            self.combo_tab.setEnabled(True)
+            self.combo_space.setEnabled(True)
+            self.lang_combo.setEnabled(True)
+            self.btn_save.setEnabled(True)
+            self.btn_save_as.setEnabled(True)
+            self.btn_comment.setEnabled(True)
+            self.btn_uncomment.setEnabled(True)
+            self.btn_hl.setEnabled(True)
     
     #
     def on_save_as(self):
