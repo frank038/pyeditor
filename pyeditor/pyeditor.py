@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9.9
+# V 0.9.10
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar,QTabWidget) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint)
@@ -290,8 +290,9 @@ class CustomMainWindow(QMainWindow):
         pop_tab = ftab(afilename, self.isargument, self)
         self.frmtab.addTab(pop_tab, os.path.basename(afilename) or "Unknown")
         self.frmtab.setTabToolTip(0, afilename or "Unknown")
-        if not os.access(afilename, os.W_OK):
-            self.frmtab.tabBar().setTabTextColor(self.frmtab.count()-1, QColor("#009900"))
+        if afilename:
+            if not os.access(afilename, os.W_OK):
+                self.frmtab.tabBar().setTabTextColor(self.frmtab.count()-1, QColor("#009900"))
         #
         self.setWindowTitle("pyeditor - {}".format(os.path.basename(afilename) or "Unknown"))
         #
@@ -1062,7 +1063,7 @@ class ftab(QWidget):
             self.on_theme()
     
     #
-    def on_read_only(self, btn):
+    def on_read_only(self):
         if self.isModified:
             MyDialog("Info", "Save this document first.", self)
             return
