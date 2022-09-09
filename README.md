@@ -1,5 +1,5 @@
 # pyeditor
-A python IDE with some features.
+A python/bash/javascript IDE and text editor with some features.
 
 V. 0.9.10
 
@@ -11,7 +11,7 @@ Requires:
 This program must be launched by using the bash script pyeditor.sh.
 
 Features:
-- tabs for file name and displays its full path while hovering (from V. 0.9.6)
+- tabs for file name and displays its full path while hovering
 - word autocompletition
 - braces autocompletition
 - string/word searching with history of previous searched words
