@@ -297,15 +297,7 @@ class CustomMainWindow(QMainWindow):
                 use_mimetype = 0
         # check from the mimetype of the file
         if use_mimetype:
-            file_type = QMimeDatabase().mimeTypeForFile(afilename, QMimeDatabase.MatchDefault).name()
-            if file_type == "text/x-python3" or file_type == "text/x-python":
-                self.isargument = 1
-            elif file_type == "application/x-shellscript":
-                self.isargument = 2
-            elif file_type == "application/javascript":
-                self.isargument = 3
-            elif file_type == "text/plain":
-                self.isargument = 4
+            self.isargument = self.set_mimetype(afilename)
         # 
         pop_tab = ftab(afilename, self.isargument, self)
         self.frmtab.addTab(pop_tab, os.path.basename(afilename) or "Unknown")
@@ -317,6 +309,21 @@ class CustomMainWindow(QMainWindow):
         self.setWindowTitle("pyeditor - {}".format(os.path.basename(afilename) or "Unknown"))
         #
         self.show()
+        
+    def get_mimetype(self, afile):
+        file_type = QMimeDatabase().mimeTypeForFile(afile, QMimeDatabase.MatchDefault).name()
+        return file_type
+        
+    def set_mimetype(self, afile):
+        file_type = self.get_mimetype(afile)
+        if file_type == "text/x-python3" or file_type == "text/x-python":
+            return 1
+        elif file_type == "application/x-shellscript":
+            return 2
+        elif file_type == "application/javascript":
+            return 3
+        elif file_type == "text/plain":
+            return 4
         
     def on_tab_changed(self, idx):
         # self.sender().tabText(idx)
@@ -342,7 +349,8 @@ class CustomMainWindow(QMainWindow):
             return
         #
         fileName = ""
-        pop_tab = ftab(fileName, self.isargument, self)
+        # pop_tab = ftab(fileName, self.isargument, self)
+        pop_tab = ftab(fileName, 4, self)
         self.frmtab.addTab(pop_tab, os.path.basename(fileName) or "Unknown")
         self.frmtab.setTabToolTip(0, fileName or "Unknown")
         self.frmtab.setCurrentIndex(self.frmtab.count()-1)
@@ -366,7 +374,8 @@ class CustomMainWindow(QMainWindow):
                 MyDialog("Info", "Not a file.", self)
                 return
             #
-            pop_tab = ftab(fileName, self.isargument, self)
+            file_type = self.set_mimetype(fileName)
+            pop_tab = ftab(fileName, file_type, self)
             self.frmtab.addTab(pop_tab, os.path.basename(fileName) or "Unknown")
             self.frmtab.setTabToolTip(0, fileName or "Unknown")
             self.frmtab.setCurrentIndex(self.frmtab.count()-1)
@@ -390,7 +399,7 @@ class CustomMainWindow(QMainWindow):
                 break
         #
         if isModified:
-            ret = retDialogBox("Question", "This document has been modified. \nDo you want to proceed anyway?", self)
+            ret = retDialogBox("Question", "A document has been modified. \nDo you want to proceed anyway?", self)
             if ret.getValue() == 0:
                 event.ignore()
                 return
