@@ -1,7 +1,7 @@
 # pyeditor
 A python/bash/javascript IDE and text editor with some features.
 
-V. 0.9.10
+V. 0.9.11
 
 Requires:
 - python3
