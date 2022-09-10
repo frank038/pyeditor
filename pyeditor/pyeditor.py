@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-# V 0.9.10
+# V 0.9.11
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar,QTabWidget) 
-from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint)
+from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint,QMimeDatabase)
 from PyQt5.QtGui import (QColor,QFont,QIcon,QPalette)
 from PyQt5.Qsci import (QsciLexerCustom,QsciScintilla,QsciLexerPython,QsciLexerBash,QsciLexerJavaScript)
 import os
@@ -266,25 +266,45 @@ class CustomMainWindow(QMainWindow):
         self.frmtab.currentChanged.connect(self.on_tab_changed)
         #
         # set the default editor style from command line
-        self.isargument = 0
+        self.isargument = 4
+        use_mimetype = 1
         if len(sys.argv) > 1:
             if sys.argv[1] == "-p":
                 self.isargument = 1
+                use_mimetype = 0
             elif sys.argv[1] == "-b":
                 self.isargument = 2
+                use_mimetype = 0
             elif sys.argv[1] == "-j":
                 self.isargument = 3
+                use_mimetype = 0
             elif sys.argv[1] == "-t":
                 self.isargument = 4
+                use_mimetype = 0
         # or from config file
         if self.isargument == 0:
             if EDITORTYPE == "python":
                 self.isargument = 1
+                use_mimetype = 0
             elif EDITORTYPE == "bash":
                 self.isargument = 2
+                use_mimetype = 0
             elif EDITORTYPE == "javascript":
                 self.isargument = 3
+                use_mimetype = 0
             elif EDITORTYPE == "text":
+                self.isargument = 4
+                use_mimetype = 0
+        # check from the mimetype of the file
+        if use_mimetype:
+            file_type = QMimeDatabase().mimeTypeForFile(afilename, QMimeDatabase.MatchDefault).name()
+            if file_type == "text/x-python3" or file_type == "text/x-python":
+                self.isargument = 1
+            elif file_type == "application/x-shellscript":
+                self.isargument = 2
+            elif file_type == "application/javascript":
+                self.isargument = 3
+            elif file_type == "text/plain":
                 self.isargument = 4
         # 
         pop_tab = ftab(afilename, self.isargument, self)

@@ -1,5 +1,5 @@
-# type of editor - one from: python, bash, javascript, text
-EDITORTYPE="python"
+# type of editor - one from: python, bash, javascript, text, "" for automatic check
+EDITORTYPE=""
 # gui style
 GUISTYLE=""
 # add the status bar: 0 no - 1 yes
