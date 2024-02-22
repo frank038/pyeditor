@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9.11
+# V 0.9.12
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar,QTabWidget) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint,QMimeDatabase)
@@ -266,7 +266,7 @@ class CustomMainWindow(QMainWindow):
         self.frmtab.currentChanged.connect(self.on_tab_changed)
         #
         # set the default editor style from command line
-        self.isargument = 4
+        self.isargument = 0
         use_mimetype = 1
         if len(sys.argv) > 1:
             if sys.argv[1] == "-p":
@@ -292,7 +292,7 @@ class CustomMainWindow(QMainWindow):
             elif EDITORTYPE == "javascript":
                 self.isargument = 3
                 use_mimetype = 0
-            elif EDITORTYPE == "text":
+            elif EDITORTYPE == "text" or EDITORTYPE == "":
                 self.isargument = 4
                 use_mimetype = 0
         # check from the mimetype of the file
@@ -349,8 +349,8 @@ class CustomMainWindow(QMainWindow):
             return
         #
         fileName = ""
-        # pop_tab = ftab(fileName, self.isargument, self)
-        pop_tab = ftab(fileName, 4, self)
+        pop_tab = ftab(fileName, self.isargument, self)
+        #pop_tab = ftab(fileName, 4, self)
         self.frmtab.addTab(pop_tab, os.path.basename(fileName) or "Unknown")
         self.frmtab.setTabToolTip(0, fileName or "Unknown")
         self.frmtab.setCurrentIndex(self.frmtab.count()-1)
@@ -528,22 +528,25 @@ class ftab(QWidget):
         self.__btn_close.clicked.connect(self.__btn_action_close)
         self.btn_box.addWidget(self.__btn_close, stretch=1)
         #
+        ####
+        self.btn_box2 = QHBoxLayout()
+        self.__lyt.addLayout(self.btn_box2)
         self.btn_search = QPushButton("Search")
         self.btn_search.clicked.connect(self.on_search)
-        self.btn_box.addWidget(self.btn_search, stretch=1)
+        self.btn_box2.addWidget(self.btn_search, stretch=1)
         #
         self.btn_comment = QPushButton("Comm")
         self.btn_comment.clicked.connect(self.on_btn_comment)
-        self.btn_box.addWidget(self.btn_comment, stretch=1)
+        self.btn_box2.addWidget(self.btn_comment, stretch=1)
         #
         self.btn_uncomment = QPushButton("Uncomm")
         self.btn_uncomment.clicked.connect(self.on_btn_uncomment)
-        self.btn_box.addWidget(self.btn_uncomment, stretch=1)
+        self.btn_box2.addWidget(self.btn_uncomment, stretch=1)
         #
         self.btn_hl = QPushButton("hl")
         self.btn_hl.setCheckable(True)
         self.btn_hl.clicked.connect(self.on_btn_hl)
-        self.btn_box.addWidget(self.btn_hl, stretch=0)
+        self.btn_box2.addWidget(self.btn_hl, stretch=0)
         # ----------------------------------------
         # self.__editor = QsciScintilla()
         self.__editor = MyQsciScintilla()
@@ -1347,6 +1350,7 @@ class searchDialog(QDialog):
         self.setWindowIcon(QIcon("icons/program.svg"))
         self.setWindowTitle("Search...")
         # self.setWindowModality(Qt.ApplicationModal)
+        self.setAttribute(Qt.WA_DeleteOnClose)
         self.resize(DIALOGWIDTH, 300)
         #
         vbox = QBoxLayout(QBoxLayout.TopToBottom)
