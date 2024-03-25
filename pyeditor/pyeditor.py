@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# V 0.9.12
+# V 0.9.13
 import sys
 from PyQt5.QtWidgets import (qApp,QMainWindow,QStyleFactory,QWidget,QFileDialog,QSizePolicy,QFrame,QBoxLayout,QVBoxLayout,QHBoxLayout,QLabel,QPushButton,QApplication,QDialog,QMessageBox,QLineEdit,QComboBox,QCheckBox,QAction,QMenu,QStatusBar,QTabWidget) 
 from PyQt5.QtCore import (Qt,pyqtSignal,QFile,QIODevice,QPoint,QMimeDatabase)
@@ -292,9 +292,11 @@ class CustomMainWindow(QMainWindow):
             elif EDITORTYPE == "javascript":
                 self.isargument = 3
                 use_mimetype = 0
-            elif EDITORTYPE == "text" or EDITORTYPE == "":
+            elif EDITORTYPE == "text":
                 self.isargument = 4
                 use_mimetype = 0
+            elif EDITORTYPE == "":
+                use_mimetype = 1
         # check from the mimetype of the file
         if use_mimetype:
             self.isargument = self.set_mimetype(afilename)
@@ -323,6 +325,8 @@ class CustomMainWindow(QMainWindow):
         elif file_type == "application/javascript":
             return 3
         elif file_type == "text/plain":
+            return 4
+        else:
             return 4
         
     def on_tab_changed(self, idx):
